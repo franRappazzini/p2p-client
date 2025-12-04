@@ -24,9 +24,9 @@ const MINT_MAP: Record<string, string> = {
   // SOL: "So11111111111111111111111111111111111111112",
   // USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   // USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-  SOL: "EFLt8jYvwP1JNbJM9q6Kzeg6QMhuhXQNcnzLrzVZQwe1",
-  USDC: "EFLt8jYvwP1JNbJM9q6Kzeg6QMhuhXQNcnzLrzVZQwe1",
-  USDT: "EFLt8jYvwP1JNbJM9q6Kzeg6QMhuhXQNcnzLrzVZQwe1",
+  SOL: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
+  USDC: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
+  USDT: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
 };
 
 export function AdDetailModal({
@@ -37,10 +37,11 @@ export function AdDetailModal({
   onUpdate,
 }: AdDetailModalProps) {
   const { primaryWallet } = useDynamicContext();
-  const { createEscrow } = useProgram();
+  const { createEscrow, markAsPaid, releaseTokens } = useProgram();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [creator, setCreator] = useState<User | null>(null);
+  const [taker, setTaker] = useState<User | null>(null);
 
   useEffect(() => {
     if (ad?.creatorWallet) {
@@ -51,14 +52,32 @@ export function AdDetailModal({
         })
         .catch(console.error);
     }
-  }, [ad?.creatorWallet]);
+    if (ad?.takenBy) {
+      fetch(`/api/users?wallet=${ad.takenBy}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.error) setTaker(data);
+        })
+        .catch(console.error);
+    }
+  }, [ad?.creatorWallet, ad?.takenBy]);
 
   if (!ad) return null;
 
   const isCreator = primaryWallet?.address === ad.creatorWallet;
+  const isTaker = primaryWallet?.address === ad.takenBy;
+
   const isTaken = ad.status === "taken";
   const canTake = !isCreator && ad.status === "active";
   const canCreateEscrow = isCreator && isTaken && !ad.escrowId;
+  const waitingForEscrow = isTaker && isTaken && !ad.escrowId;
+
+  const canPay = isTaker && (ad.status === "escrow_created" || (isTaken && ad.escrowId));
+  const waitingForPayment =
+    isCreator && (ad.status === "escrow_created" || (isTaken && ad.escrowId));
+
+  const canRelease = isCreator && ad.status === "paid";
+  const waitingForRelease = isTaker && ad.status === "paid";
 
   const handleTakeAd = async () => {
     if (!primaryWallet) return;
@@ -117,6 +136,52 @@ export function AdDetailModal({
     }
   };
 
+  const handleMarkPaid = async () => {
+    if (ad.escrowId === undefined) return;
+    setIsLoading(true);
+    try {
+      await markAsPaid(ad.escrowId);
+      showToast({ message: "Marked as paid on-chain!", type: "success" });
+
+      await fetch(`/api/ads/${ad.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "paid" }),
+      });
+
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      showToast({ message: "Failed to mark as paid", type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRelease = async () => {
+    if (ad.escrowId === undefined) return;
+    setIsLoading(true);
+    try {
+      await releaseTokens(ad.escrowId);
+      showToast({ message: "Tokens released! Trade completed.", type: "success" });
+
+      await fetch(`/api/ads/${ad.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "completed" }),
+      });
+
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      showToast({ message: "Failed to release tokens", type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const formatTimeLeft = (expiresAt: number) => {
     // ... existing code ...
     const now = Date.now();
@@ -149,11 +214,11 @@ export function AdDetailModal({
   const mockSuccessRate = 96;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="">
+    <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-6">
         {/* Type & Amounts */}
         <div className="mb-6">
-          <Badge variant={ad.type === "buy" ? "success" : "primary"} className="mb-3">
+          <Badge variant={ad.type === "buy" ? "success" : "default"} className="mb-3">
             {ad.type.toUpperCase()}
           </Badge>
           <h2 className="text-3xl font-bold text-card-foreground mb-2">
@@ -198,12 +263,14 @@ export function AdDetailModal({
 
         {/* Creator Profile */}
         <div className="bg-card border border-border rounded-xl p-4 mb-6">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">Creator Profile</h3>
+          <h3 className="text-sm font-semibold text-card-foreground mb-3">
+            {isCreator ? "Your Profile (Creator)" : "Creator Profile"}
+          </h3>
           <div className="flex items-start gap-3 mb-4">
-            <Avatar name={ad.creatorWallet} size="md" />
+            <Avatar src={creator?.avatar} alt={ad.creatorWallet} size="md" />
             <div className="flex-1">
               <p className="font-semibold text-card-foreground">
-                {truncateWallet(ad.creatorWallet)}
+                {creator?.username || truncateWallet(ad.creatorWallet)}
               </p>
               <p className="text-xs text-muted-foreground font-mono">{ad.creatorWallet}</p>
               {creator?.telegramUsername && (
@@ -218,22 +285,38 @@ export function AdDetailModal({
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground ml-1">
-                  {mockRating} ({mockCompletedTrades} reviews)
+                  {mockRating} ({creator?.completedTrades || mockCompletedTrades} trades)
                 </span>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-muted/30 rounded-lg p-2 text-center">
-              <p className="text-muted-foreground text-xs">Completed</p>
-              <p className="font-bold text-card-foreground">{mockCompletedTrades}</p>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-2 text-center">
-              <p className="text-muted-foreground text-xs">Success Rate</p>
-              <p className="font-bold text-card-foreground">{mockSuccessRate}%</p>
+        </div>
+
+        {/* Taker Profile (if exists and user is creator) */}
+        {isCreator && ad.takenBy && (
+          <div className="bg-card border border-border rounded-xl p-4 mb-6">
+            <h3 className="text-sm font-semibold text-card-foreground mb-3">
+              Counterparty (Taker)
+            </h3>
+            <div className="flex items-start gap-3 mb-4">
+              <Avatar src={taker?.avatar} alt={ad.takenBy} size="md" />
+              <div className="flex-1">
+                <p className="font-semibold text-card-foreground">
+                  {taker?.username || truncateWallet(ad.takenBy)}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">{ad.takenBy}</p>
+                {taker?.telegramUsername && (
+                  <p className="text-sm text-primary mt-1">@{taker.telegramUsername}</p>
+                )}
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-sm text-muted-foreground ml-1">
+                    {taker?.completedTrades || 0} completed trades
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Terms */}
         {ad.terms && (
@@ -249,12 +332,42 @@ export function AdDetailModal({
         {showEscrowProgress && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-card-foreground mb-3">Escrow Status</h3>
-            <StatusStepper currentStep={2} steps={["Open", "Fiat Paid", "Completed"]} />
+            <StatusStepper
+              steps={[
+                {
+                  label: "Escrow Created",
+                  completed:
+                    ad.status === "escrow_created" ||
+                    ad.status === "paid" ||
+                    ad.status === "completed",
+                  current: ad.status === "taken",
+                },
+                {
+                  label: "Payment Sent",
+                  completed: ad.status === "paid" || ad.status === "completed",
+                  current: ad.status === "escrow_created",
+                },
+                {
+                  label: "Tokens Released",
+                  completed: ad.status === "completed",
+                  current: ad.status === "paid",
+                },
+              ]}
+            />
           </div>
         )}
 
         {/* Action Buttons */}
         <div className="space-y-3">
+          {waitingForEscrow && (
+            <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 text-center mb-3">
+              <p className="text-warning font-medium">Waiting for seller to create escrow</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Please wait for the seller to initialize the on-chain escrow.
+              </p>
+            </div>
+          )}
+
           {canTake && (
             <Button
               variant="primary"
@@ -279,12 +392,55 @@ export function AdDetailModal({
             </Button>
           )}
 
-          {creator?.telegramUsername && (
+          {waitingForPayment && (
+            <div className="bg-muted/30 border border-border rounded-lg p-4 text-center mb-3">
+              <p className="text-muted-foreground font-medium">Waiting for buyer to pay</p>
+            </div>
+          )}
+
+          {canPay && (
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleMarkPaid}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Mark as Paid"}
+            </Button>
+          )}
+
+          {waitingForRelease && (
+            <div className="bg-muted/30 border border-border rounded-lg p-4 text-center mb-3">
+              <p className="text-muted-foreground font-medium">
+                Waiting for seller to release tokens
+              </p>
+            </div>
+          )}
+
+          {canRelease && (
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full bg-green-600 hover:bg-green-700"
+              onClick={handleRelease}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Release Tokens"}
+            </Button>
+          )}
+
+          {(isCreator ? taker?.telegramUsername : creator?.telegramUsername) && (
             <Button
               variant="outline"
               size="md"
               className="w-full bg-transparent"
-              onClick={() => window.open(`https://t.me/${creator.telegramUsername}`, "_blank")}
+              onClick={() => {
+                const username = isCreator ? taker?.telegramUsername : creator?.telegramUsername;
+                if (username) {
+                  window.open(`https://t.me/${username}`, "_blank");
+                }
+              }}
             >
               Contact on Telegram
             </Button>

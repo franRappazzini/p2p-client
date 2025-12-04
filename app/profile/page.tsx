@@ -1,13 +1,17 @@
-"use client"
+"use client";
 
-import { SimpleHeader } from "@/components/simple-header"
-import { Sidebar } from "@/components/sidebar"
-import { Avatar } from "@/components/ui-custom/avatar"
-import { Button } from "@/components/ui-custom/button"
-import { StatCard } from "@/components/ui-custom/stat-card"
-import { Tabs } from "@/components/ui-custom/tabs"
-import { Badge } from "@/components/ui-custom/badge"
-import { currentUser, mockAnnouncements, mockReviews } from "@/lib/mock-data"
+import { useEffect, useState } from "react";
+import { SimpleHeader } from "@/components/simple-header";
+import { Sidebar } from "@/components/sidebar";
+import { Avatar } from "@/components/ui-custom/avatar";
+import { Button } from "@/components/ui-custom/button";
+import { StatCard } from "@/components/ui-custom/stat-card";
+import { Tabs } from "@/components/ui-custom/tabs";
+import { Badge } from "@/components/ui-custom/badge";
+import { mockAnnouncements, mockReviews } from "@/lib/mock-data";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { User } from "@/lib/types";
+import { useToast } from "@/components/toast";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -15,7 +19,9 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-5 h-5 ${star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"}`}
+          className={`w-5 h-5 ${
+            star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"
+          }`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -23,11 +29,101 @@ function StarRating({ rating }: { rating: number }) {
         </svg>
       ))}
     </div>
-  )
+  );
 }
 
 export default function ProfilePage() {
-  const userAnnouncements = mockAnnouncements.slice(0, 3)
+  const { primaryWallet } = useDynamicContext();
+  const { showToast, ToastComponent } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    username: "",
+    telegramUsername: "",
+    avatar: "",
+  });
+
+  useEffect(() => {
+    if (primaryWallet?.address) {
+      fetchUser(primaryWallet.address);
+    }
+  }, [primaryWallet?.address]);
+
+  const fetchUser = async (wallet: string) => {
+    try {
+      const res = await fetch(`/api/users?wallet=${wallet}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        setFormData({
+          username: data.username,
+          telegramUsername: data.telegramUsername || "",
+          avatar: data.avatar || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!primaryWallet?.address) return;
+
+    try {
+      const res = await fetch("/api/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletAddress: primaryWallet.address,
+          ...formData,
+        }),
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUser(updatedUser);
+        setIsEditing(false);
+        showToast({ message: "Profile updated successfully!", type: "success" });
+      } else {
+        throw new Error("Failed to update");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast({ message: "Failed to update profile", type: "error" });
+    }
+  };
+
+  if (!primaryWallet) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Please connect your wallet to view your profile.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading profile...</p>
+      </div>
+    );
+  }
+
+  const userAnnouncements = mockAnnouncements.slice(0, 3);
 
   const tabContent = {
     active: (
@@ -61,7 +157,12 @@ export default function ProfilePage() {
         {userAnnouncements.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-8 h-8 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -120,7 +221,9 @@ export default function ProfilePage() {
                   {[1, 2, 3, 4, 5].map((star) => (
                     <svg
                       key={star}
-                      className={`w-4 h-4 ${star <= review.rating ? "text-warning fill-warning" : "text-muted"}`}
+                      className={`w-4 h-4 ${
+                        star <= review.rating ? "text-warning fill-warning" : "text-muted"
+                      }`}
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -135,61 +238,120 @@ export default function ProfilePage() {
         ))}
       </div>
     ),
-  }
+  };
 
   const tabs = [
     { id: "active", label: "Active", content: tabContent.active },
     { id: "completed", label: "Completed", content: tabContent.completed },
     { id: "reviews", label: "Reviews", content: tabContent.reviews },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       <SimpleHeader />
       <Sidebar />
+      {ToastComponent}
 
       <main className="md:ml-16 container mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <Avatar
-              src="/male-avatar-professional.jpg"
-              alt={currentUser.username}
-              size="xl"
-              className="mx-auto md:mx-0"
-            />
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-2xl font-bold text-card-foreground mb-1">{currentUser.username}</h1>
-              <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-3">
-                <span className="font-mono text-sm">{currentUser.wallet}</span>
-                <button className="p-1 hover:bg-muted rounded transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+            <div className="relative group">
+              <Avatar
+                src={isEditing ? formData.avatar : user?.avatar}
+                alt={user?.username || "User"}
+                size="xl"
+                className="mx-auto md:mx-0"
+              />
+              {isEditing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <label className="cursor-pointer text-white text-xs font-medium">
+                    Change
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
                     />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                <StarRating rating={currentUser.rating} />
-                <span className="text-muted-foreground">
-                  {currentUser.rating} ({currentUser.reviewCount} reviews)
-                </span>
-              </div>
-              <Button variant="outline" size="sm">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  />
-                </svg>
-                Edit Profile
-              </Button>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 text-center md:text-left w-full">
+              {isEditing ? (
+                <div className="space-y-4 max-w-md">
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                      Telegram Username
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-muted-foreground">@</span>
+                      <input
+                        type="text"
+                        value={formData.telegramUsername}
+                        onChange={(e) =>
+                          setFormData({ ...formData, telegramUsername: e.target.value })
+                        }
+                        className="w-full pl-7 pr-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-center md:justify-start">
+                    <Button variant="primary" size="sm" onClick={handleSave}>
+                      Save Changes
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold text-card-foreground mb-1">
+                    {user?.username || "Anonymous User"}
+                  </h1>
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-3">
+                    <span className="font-mono text-sm">
+                      {user?.walletAddress || primaryWallet.address}
+                    </span>
+                    {user?.telegramUsername && (
+                      <span className="text-primary text-sm">@{user.telegramUsername}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
+                    <StarRating rating={4.8} />
+                    <span className="text-muted-foreground">4.8 (24 reviews)</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
+                    </svg>
+                    Edit Profile
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -198,7 +360,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Completed Trades"
-            value={currentUser.completedTrades}
+            value={user?.completedTrades || 0}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -212,16 +374,21 @@ export default function ProfilePage() {
           />
           <StatCard
             title="Success Rate"
-            value={`${currentUser.successRate}%`}
+            value="98%"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
               </svg>
             }
           />
           <StatCard
             title="Rating"
-            value={`★ ${currentUser.rating}`}
+            value="★ 4.8"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -235,7 +402,7 @@ export default function ProfilePage() {
           />
           <StatCard
             title="Member Since"
-            value={currentUser.memberSince}
+            value={new Date(user?.createdAt || Date.now()).toLocaleDateString()}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -255,5 +422,5 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -22,19 +22,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.wallet || !body.username) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!body.walletAddress) {
+      return NextResponse.json({ error: "Missing walletAddress" }, { status: 400 });
     }
 
     const newUser: User = {
-      id: crypto.randomUUID(),
-      memberSince: new Date().toISOString(),
-      rating: 0,
-      reviewCount: 0,
+      walletAddress: body.walletAddress,
+      username: body.username || `User ${body.walletAddress.slice(0, 6)}`,
+      telegramUsername: body.telegramUsername || "",
+      avatar: body.avatar || "",
+      createdAt: Date.now(),
+      positiveRatings: 0,
+      negativeRatings: 0,
       completedTrades: 0,
-      successRate: 0,
-      avatar: "",
-      ...body,
+      reputation: 0,
     };
 
     const createdUser = db.users.create(newUser);
@@ -42,5 +43,27 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { walletAddress, ...updates } = body;
+
+    if (!walletAddress) {
+      return NextResponse.json({ error: "Missing walletAddress" }, { status: 400 });
+    }
+
+    const updatedUser = db.users.update(walletAddress, updates);
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedUser);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }

@@ -92,15 +92,15 @@ export function useProgram() {
       .accounts({
         creator: provider.publicKey,
         buyer: buyerPubkey,
-        globalConfig,
-        escrow,
+        // globalConfig,
+        // escrow,
         mint: mintPubkey,
-        mintVault,
-        creatorAta,
-        mintVaultAta,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        // mintVault,
+        // creatorAta,
+        // mintVaultAta,
+        // associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
+        // systemProgram: SystemProgram.programId,
       })
       .rpc();
 

@@ -3,25 +3,24 @@
 import { useEffect, useState } from "react";
 
 import { Ad } from "@/lib/types";
+import { AdDetailModal } from "@/components/ad-detail-modal";
 import { Badge } from "@/components/ui-custom/badge";
 import { Button } from "@/components/ui-custom/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
-import { StatCard } from "@/components/ui-custom/stat-card";
 import { TableSkeleton } from "@/components/loading-skeleton";
 import { Tabs } from "@/components/ui-custom/tabs";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { useProgram } from "@/hooks/use-program";
 import { useToast } from "@/components/toast";
 
 function EscrowTable({
   ads,
   showLoading = false,
-  onAction,
+  onViewDetails,
 }: {
   ads: Ad[];
   showLoading?: boolean;
-  onAction: (ad: Ad, action: "pay" | "release") => void;
+  onViewDetails: (ad: Ad) => void;
 }) {
   const { primaryWallet } = useDynamicContext();
 
@@ -75,9 +74,8 @@ function EscrowTable({
         </thead>
         <tbody>
           {ads.map((ad) => {
-            const isSeller = primaryWallet?.address === ad.creatorWallet;
-            const isBuyer = primaryWallet?.address === ad.takenBy;
-            const hasEscrow = ad.escrowId !== undefined;
+            const isActionable =
+              ad.status === "taken" || ad.status === "escrow_created" || ad.status === "paid";
 
             return (
               <tr
@@ -88,7 +86,7 @@ function EscrowTable({
                   {ad.id.slice(0, 8)}
                 </td>
                 <td className="py-4 px-4">
-                  <Badge variant={ad.type === "buy" ? "success" : "primary"} size="sm">
+                  <Badge variant={ad.type === "buy" ? "success" : "default"} size="sm">
                     {ad.type.toUpperCase()}
                   </Badge>
                 </td>
@@ -96,7 +94,7 @@ function EscrowTable({
                   {ad.tokenAmount} {ad.tokenMint}
                 </td>
                 <td className="py-4 px-4">
-                  <Badge variant="outline" size="sm">
+                  <Badge variant="default" size="sm">
                     {ad.status}
                   </Badge>
                 </td>
@@ -104,16 +102,13 @@ function EscrowTable({
                   {new Date(ad.createdAt).toLocaleDateString()}
                 </td>
                 <td className="py-4 px-4 text-right">
-                  {hasEscrow && isBuyer && ad.status !== "completed" && (
-                    <Button variant="primary" size="sm" onClick={() => onAction(ad, "pay")}>
-                      Mark Paid
-                    </Button>
-                  )}
-                  {hasEscrow && isSeller && ad.status !== "completed" && (
-                    <Button variant="success" size="sm" onClick={() => onAction(ad, "release")}>
-                      Release
-                    </Button>
-                  )}
+                  <Button
+                    variant={isActionable ? "primary" : "outline"}
+                    size="sm"
+                    onClick={() => onViewDetails(ad)}
+                  >
+                    {isActionable ? "Manage Trade" : "View Details"}
+                  </Button>
                 </td>
               </tr>
             );
@@ -126,10 +121,11 @@ function EscrowTable({
 
 export default function DashboardPage() {
   const { primaryWallet } = useDynamicContext();
-  const { markAsPaid, releaseTokens } = useProgram();
-  const { showToast, ToastComponent } = useToast();
+  const { ToastComponent } = useToast();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchAds = async () => {
     try {
@@ -156,34 +152,26 @@ export default function DashboardPage() {
     }
   }, [primaryWallet]);
 
-  const handleAction = async (ad: Ad, action: "pay" | "release") => {
-    if (ad.escrowId === undefined) return;
+  const handleViewDetails = (ad: Ad) => {
+    setSelectedAd(ad);
+    setIsModalOpen(true);
+  };
 
-    try {
-      if (action === "pay") {
-        await markAsPaid(ad.escrowId);
-        showToast({ message: "Marked as paid on-chain!", type: "success" });
-        // Update status locally or refetch
-        // Ideally update backend too
-      } else {
-        await releaseTokens(ad.escrowId);
-        showToast({ message: "Tokens released! Trade completed.", type: "success" });
-        // Update backend
-        await fetch(`/api/ads/${ad.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "completed" }),
-        });
-        fetchAds();
-      }
-    } catch (error) {
-      console.error(error);
-      showToast({ message: `Failed to ${action}`, type: "error" });
-    }
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedAd(null);
+  };
+
+  const handleAdUpdate = () => {
+    fetchAds();
   };
 
   const activeAds = ads.filter(
-    (a) => a.status === "active" || a.status === "taken" || a.status === "escrow_created"
+    (a) =>
+      a.status === "active" ||
+      a.status === "taken" ||
+      a.status === "escrow_created" ||
+      a.status === "paid"
   );
   const completedAds = ads.filter((a) => a.status === "completed");
 
@@ -191,17 +179,25 @@ export default function DashboardPage() {
     {
       id: "all",
       label: "All",
-      content: <EscrowTable ads={ads} showLoading={isLoading} onAction={handleAction} />,
+      content: <EscrowTable ads={ads} showLoading={isLoading} onViewDetails={handleViewDetails} />,
     },
     {
       id: "active",
       label: "Active",
-      content: <EscrowTable ads={activeAds} showLoading={isLoading} onAction={handleAction} />,
+      content: (
+        <EscrowTable ads={activeAds} showLoading={isLoading} onViewDetails={handleViewDetails} />
+      ),
     },
     {
       id: "completed",
       label: "Completed",
-      content: <EscrowTable ads={completedAds} showLoading={isLoading} onAction={handleAction} />,
+      content: (
+        <EscrowTable
+          ads={completedAds}
+          showLoading={isLoading}
+          onViewDetails={handleViewDetails}
+        />
+      ),
     },
   ];
 
@@ -221,6 +217,14 @@ export default function DashboardPage() {
           <Tabs tabs={tabs} />
         </div>
       </main>
+
+      <AdDetailModal
+        ad={selectedAd}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        showEscrowProgress={true}
+        onUpdate={handleAdUpdate}
+      />
     </div>
   );
 }

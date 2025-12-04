@@ -3,6 +3,7 @@
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { SolanaWalletConnectors } from "@dynamic-labs/solana";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthWatcher } from "@/components/auth-watcher";
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           walletConnectors: [SolanaWalletConnectors],
         }}
       >
+        <AuthWatcher />
         {children}
       </DynamicContextProvider>
     </ThemeProvider>

@@ -1,30 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { SimpleHeader } from "@/components/simple-header"
-import { Sidebar } from "@/components/sidebar"
-import { FiltersBar } from "@/components/filters-bar"
-import { AdsTable } from "@/components/ads-table"
-import { AdDetailModal } from "@/components/ad-detail-modal"
-import { useAds } from "@/hooks/use-ads"
-import type { Ad } from "@/lib/types"
+import type { Ad } from "@/lib/types";
+import { AdDetailModal } from "@/components/ad-detail-modal";
+import { AdsTable } from "@/components/ads-table";
+import { FiltersBar } from "@/components/filters-bar";
+import { Sidebar } from "@/components/sidebar";
+import { SimpleHeader } from "@/components/simple-header";
+import { useAds } from "@/hooks/use-ads";
+import { useState } from "react";
 
 export default function HomePage() {
-  const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [filters, setFilters] = useState({
     type: "buy",
     token: "all",
     fiat: "all",
-  })
+  });
 
-  const { data: ads, loading, error, refetch } = useAds(filters)
+  const { data: allAds, loading, error, refetch } = useAds(filters);
+  const ads = allAds.filter((ad) => ad.status === "active");
 
   const handleViewDetails = (ad: Ad) => {
-    setSelectedAd(ad)
-    setIsModalOpen(true)
-  }
+    setSelectedAd(ad);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +84,10 @@ export default function HomePage() {
             </svg>
             <p className="text-foreground font-medium mb-2">Failed to load ads</p>
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <button onClick={() => refetch()} className="text-sm text-primary hover:text-primary/80 font-medium">
+            <button
+              onClick={() => refetch()}
+              className="text-sm text-primary hover:text-primary/80 font-medium"
+            >
               Try Again
             </button>
           </div>
@@ -105,11 +109,15 @@ export default function HomePage() {
               />
             </svg>
             <p className="text-foreground font-medium mb-2">No ads found</p>
-            <p className="text-sm text-muted-foreground">Try adjusting your filters or create the first ad!</p>
+            <p className="text-sm text-muted-foreground">
+              Try adjusting your filters or create the first ad!
+            </p>
           </div>
         )}
 
-        {!loading && !error && ads.length > 0 && <AdsTable ads={ads} onViewDetails={handleViewDetails} />}
+        {!loading && !error && ads.length > 0 && (
+          <AdsTable ads={ads} onViewDetails={handleViewDetails} />
+        )}
       </main>
 
       {/* Footer */}
@@ -118,7 +126,12 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-primary-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -131,13 +144,22 @@ export default function HomePage() {
             </div>
             <p className="text-sm text-muted-foreground">© 2025 SolEscrow. All rights reserved.</p>
             <div className="flex gap-4">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Terms
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Privacy
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Support
               </a>
             </div>
@@ -153,5 +175,5 @@ export default function HomePage() {
         showEscrowProgress={selectedAd?.id === "2"}
       />
     </div>
-  )
+  );
 }
