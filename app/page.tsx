@@ -3,7 +3,9 @@
 import type { Ad } from "@/lib/types";
 import { AdDetailModal } from "@/components/ad-detail-modal";
 import { AdsTable } from "@/components/ads-table";
+import { Button } from "@/components/ui-custom/button";
 import { FiltersBar } from "@/components/filters-bar";
+import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
 import { useAds } from "@/hooks/use-ads";
@@ -42,12 +44,17 @@ export default function HomePage() {
           <h2 className="text-lg font-semibold text-foreground">
             {loading ? "Loading..." : `${ads.length} Active Ads`}
           </h2>
-          <select className="text-sm border border-border rounded-lg px-3 py-2 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-            <option>Newest First</option>
-            <option>Lowest Price</option>
-            <option>Highest Amount</option>
-            <option>Ending Soon</option>
-          </select>
+          <div className="flex items-center gap-4">
+            <Link href="/create">
+              <Button>Create Ad</Button>
+            </Link>
+            <select className="text-sm border border-border rounded-lg px-3 py-2 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+              <option>Newest First</option>
+              <option>Lowest Price</option>
+              <option>Highest Amount</option>
+              <option>Ending Soon</option>
+            </select>
+          </div>
         </div>
 
         {loading && (

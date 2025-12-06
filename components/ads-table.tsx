@@ -1,27 +1,28 @@
-"use client"
+"use client";
 
-import { Badge } from "./ui-custom/badge"
-import { Button } from "./ui-custom/button"
-import { Avatar } from "./ui-custom/avatar"
-import type { Ad } from "@/lib/types"
+import type { Ad } from "@/lib/types";
+import { AddressDisplay } from "./ui-custom/address-display";
+import { Avatar } from "./ui-custom/avatar";
+import { Badge } from "./ui-custom/badge";
+import { Button } from "./ui-custom/button";
 
 interface AdsTableProps {
-  ads: Ad[]
-  onViewDetails: (ad: Ad) => void
+  ads: Ad[];
+  onViewDetails: (ad: Ad) => void;
 }
 
 export function AdsTable({ ads, onViewDetails }: AdsTableProps) {
   const getTimeLeft = (expiresAt: number) => {
-    const now = Date.now()
-    const diff = expiresAt - now
-    if (diff <= 0) return "Expired"
+    const now = Date.now();
+    const diff = expiresAt - now;
+    if (diff <= 0) return "Expired";
 
-    const hours = Math.floor(diff / 3600000)
-    const minutes = Math.floor((diff % 3600000) / 60000)
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
 
-    if (hours > 0) return `${hours}h ${minutes}m left`
-    return `${minutes}m left`
-  }
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+  };
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
@@ -49,15 +50,18 @@ export function AdsTable({ ads, onViewDetails }: AdsTableProps) {
                 }
               >
                 <td className="px-4 py-4">
-                  <Badge variant={ad.type === "buy" ? "success" : "primary"}>{ad.type.toUpperCase()}</Badge>
+                  <Badge variant={ad.type === "buy" ? "success" : "primary"}>
+                    {ad.type.toUpperCase()}
+                  </Badge>
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-2">
                     <Avatar name={ad.creatorWallet} size="sm" />
                     <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {ad.creatorWallet.slice(0, 4)}...{ad.creatorWallet.slice(-4)}
-                      </p>
+                      <AddressDisplay
+                        address={ad.creatorWallet}
+                        className="text-sm font-medium text-foreground"
+                      />
                       <div className="flex items-center gap-1">
                         <span className="text-warning text-xs">★</span>
                         <span className="text-xs text-muted-foreground">New</span>
@@ -97,9 +101,16 @@ export function AdsTable({ ads, onViewDetails }: AdsTableProps) {
         {ads.map((ad) => (
           <div key={ad.id} className="p-4">
             <div className="flex items-start justify-between mb-3">
-              <Badge variant={ad.type === "buy" ? "success" : "primary"}>{ad.type.toUpperCase()}</Badge>
+              <Badge variant={ad.type === "buy" ? "success" : "primary"}>
+                {ad.type.toUpperCase()}
+              </Badge>
               <div className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-muted-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -138,12 +149,17 @@ export function AdsTable({ ads, onViewDetails }: AdsTableProps) {
 
             <p className="text-xs text-muted-foreground mb-3">Payment: {ad.paymentMethod}</p>
 
-            <Button variant="primary" size="sm" className="w-full" onClick={() => onViewDetails(ad)}>
+            <Button
+              variant="primary"
+              size="sm"
+              className="w-full"
+              onClick={() => onViewDetails(ad)}
+            >
               {ad.type === "buy" ? `Sell ${ad.tokenMint}` : `Buy ${ad.tokenMint}`}
             </Button>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

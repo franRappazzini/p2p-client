@@ -1,16 +1,18 @@
 "use client";
 
+import { mockAnnouncements, mockReviews } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
-import { SimpleHeader } from "@/components/simple-header";
-import { Sidebar } from "@/components/sidebar";
+
+import { AddressDisplay } from "@/components/ui-custom/address-display";
 import { Avatar } from "@/components/ui-custom/avatar";
+import { Badge } from "@/components/ui-custom/badge";
 import { Button } from "@/components/ui-custom/button";
+import { Sidebar } from "@/components/sidebar";
+import { SimpleHeader } from "@/components/simple-header";
 import { StatCard } from "@/components/ui-custom/stat-card";
 import { Tabs } from "@/components/ui-custom/tabs";
-import { Badge } from "@/components/ui-custom/badge";
-import { mockAnnouncements, mockReviews } from "@/lib/mock-data";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { User } from "@/lib/types";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useToast } from "@/components/toast";
 
 function StarRating({ rating }: { rating: number }) {
@@ -323,9 +325,10 @@ export default function ProfilePage() {
                     {user?.username || "Anonymous User"}
                   </h1>
                   <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-3">
-                    <span className="font-mono text-sm">
-                      {user?.walletAddress || primaryWallet.address}
-                    </span>
+                    <AddressDisplay
+                      address={user?.walletAddress || primaryWallet.address || ""}
+                      className="font-mono text-sm"
+                    />
                     {user?.telegramUsername && (
                       <span className="text-primary text-sm">@{user.telegramUsername}</span>
                     )}

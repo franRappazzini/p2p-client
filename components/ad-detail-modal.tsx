@@ -3,6 +3,7 @@
 import type { Ad, User } from "@/lib/types";
 import { useEffect, useState } from "react";
 
+import { AddressDisplay } from "./ui-custom/address-display";
 import { Avatar } from "./ui-custom/avatar";
 import { Badge } from "./ui-custom/badge";
 import { Button } from "./ui-custom/button";
@@ -24,9 +25,9 @@ const MINT_MAP: Record<string, string> = {
   // SOL: "So11111111111111111111111111111111111111112",
   // USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   // USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-  SOL: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
-  USDC: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
-  USDT: "E4fdSyWzQEyb74VXQGr4VagFEZy82VUXjpgEHxegmoUr",
+  SOL: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
+  USDC: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
+  USDT: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
 };
 
 export function AdDetailModal({
@@ -42,6 +43,31 @@ export function AdDetailModal({
   const [isLoading, setIsLoading] = useState(false);
   const [creator, setCreator] = useState<User | null>(null);
   const [taker, setTaker] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [hasRated, setHasRated] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+
+  useEffect(() => {
+    if (primaryWallet?.address) {
+      fetch(`/api/users?wallet=${primaryWallet.address}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.error) setCurrentUser(data);
+        })
+        .catch(console.error);
+    }
+  }, [primaryWallet?.address]);
+
+  useEffect(() => {
+    if (ad?.status === "completed" && primaryWallet?.address) {
+      fetch(`/api/ratings?fromWallet=${primaryWallet.address}&adId=${ad.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.hasRated) setHasRated(true);
+        });
+    }
+  }, [ad?.status, ad?.id, primaryWallet?.address]);
 
   useEffect(() => {
     if (ad?.creatorWallet) {
@@ -81,6 +107,15 @@ export function AdDetailModal({
 
   const handleTakeAd = async () => {
     if (!primaryWallet) return;
+
+    if (!currentUser?.telegramUsername) {
+      showToast({
+        message: "You must set a Telegram username in your profile to take ads.",
+        type: "error",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch(`/api/ads/${ad.id}`, {
@@ -122,6 +157,7 @@ export function AdDetailModal({
         body: JSON.stringify({
           escrowId: escrowId,
           status: "escrow_created", // Or keep "taken" and use escrowId presence
+          creationSignature: tx,
         }),
       });
 
@@ -140,13 +176,13 @@ export function AdDetailModal({
     if (ad.escrowId === undefined) return;
     setIsLoading(true);
     try {
-      await markAsPaid(ad.escrowId);
+      const tx = await markAsPaid(ad.escrowId);
       showToast({ message: "Marked as paid on-chain!", type: "success" });
 
       await fetch(`/api/ads/${ad.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "paid" }),
+        body: JSON.stringify({ status: "paid", paidSignature: tx }),
       });
 
       if (onUpdate) onUpdate();
@@ -163,13 +199,13 @@ export function AdDetailModal({
     if (ad.escrowId === undefined) return;
     setIsLoading(true);
     try {
-      await releaseTokens(ad.escrowId);
+      const tx = await releaseTokens(ad.escrowId);
       showToast({ message: "Tokens released! Trade completed.", type: "success" });
 
       await fetch(`/api/ads/${ad.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "completed" }),
+        body: JSON.stringify({ status: "completed", releaseSignature: tx }),
       });
 
       if (onUpdate) onUpdate();
@@ -179,6 +215,35 @@ export function AdDetailModal({
       showToast({ message: "Failed to release tokens", type: "error" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRate = async () => {
+    if (!primaryWallet || userRating === 0 || !ad) return;
+
+    const targetWallet = isCreator ? ad.takenBy : ad.creatorWallet;
+    if (!targetWallet) return;
+
+    try {
+      const res = await fetch("/api/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromWallet: primaryWallet.address,
+          toWallet: targetWallet,
+          adId: ad.id,
+          rating: userRating,
+          comment: ratingComment,
+        }),
+      });
+
+      if (res.ok) {
+        setHasRated(true);
+        showToast({ message: "Rating submitted!", type: "success" });
+      }
+    } catch (error) {
+      console.error(error);
+      showToast({ message: "Failed to submit rating", type: "error" });
     }
   };
 
@@ -270,9 +335,14 @@ export function AdDetailModal({
             <Avatar src={creator?.avatar} alt={ad.creatorWallet} size="md" />
             <div className="flex-1">
               <p className="font-semibold text-card-foreground">
-                {creator?.username || truncateWallet(ad.creatorWallet)}
+                {creator?.username || <AddressDisplay address={ad.creatorWallet} />}
               </p>
-              <p className="text-xs text-muted-foreground font-mono">{ad.creatorWallet}</p>
+              {creator?.username && (
+                <AddressDisplay
+                  address={ad.creatorWallet}
+                  className="text-xs text-muted-foreground"
+                />
+              )}
               {creator?.telegramUsername && (
                 <p className="text-sm text-primary mt-1">@{creator.telegramUsername}</p>
               )}
@@ -302,9 +372,11 @@ export function AdDetailModal({
               <Avatar src={taker?.avatar} alt={ad.takenBy} size="md" />
               <div className="flex-1">
                 <p className="font-semibold text-card-foreground">
-                  {taker?.username || truncateWallet(ad.takenBy)}
+                  {taker?.username || <AddressDisplay address={ad.takenBy} />}
                 </p>
-                <p className="text-xs text-muted-foreground font-mono">{ad.takenBy}</p>
+                {taker?.username && (
+                  <AddressDisplay address={ad.takenBy} className="text-xs text-muted-foreground" />
+                )}
                 {taker?.telegramUsername && (
                   <p className="text-sm text-primary mt-1">@{taker.telegramUsername}</p>
                 )}
@@ -354,6 +426,83 @@ export function AdDetailModal({
                 },
               ]}
             />
+          </div>
+        )}
+
+        {/* Transaction History */}
+        {(ad.creationSignature || ad.paidSignature || ad.releaseSignature) && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-card-foreground mb-2">Transaction History</h3>
+            <div className="space-y-2 text-sm">
+              {ad.creationSignature && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Escrow Created:</span>
+                  <a
+                    href={`https://explorer.solana.com/tx/${ad.creationSignature}?cluster=custom&customUrl=http%3A%2F%2F127.0.0.1%3A8899`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline truncate max-w-[200px]"
+                  >
+                    View on Explorer
+                  </a>
+                </div>
+              )}
+              {ad.paidSignature && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Marked as Paid:</span>
+                  <a
+                    href={`https://explorer.solana.com/tx/${ad.paidSignature}?cluster=custom&customUrl=http%3A%2F%2F127.0.0.1%3A8899`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline truncate max-w-[200px]"
+                  >
+                    View on Explorer
+                  </a>
+                </div>
+              )}
+              {ad.releaseSignature && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tokens Released:</span>
+                  <a
+                    href={`https://explorer.solana.com/tx/${ad.releaseSignature}?cluster=custom&customUrl=http%3A%2F%2F127.0.0.1%3A8899`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline truncate max-w-[200px]"
+                  >
+                    View on Explorer
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Rating Section */}
+        {ad.status === "completed" && !hasRated && (
+          <div className="bg-card border border-border rounded-xl p-4 mb-6">
+            <h3 className="text-sm font-semibold text-card-foreground mb-3">
+              Rate your experience
+            </h3>
+            <div className="flex gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setUserRating(star)}
+                  className={`text-2xl ${star <= userRating ? "text-warning" : "text-muted"}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="w-full bg-background border border-border rounded-lg p-2 text-sm mb-3"
+              placeholder="Optional comment..."
+              value={ratingComment}
+              onChange={(e) => setRatingComment(e.target.value)}
+            />
+            <Button onClick={handleRate} disabled={userRating === 0} className="w-full">
+              Submit Rating
+            </Button>
           </div>
         )}
 

@@ -1,14 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui-custom/button";
 import { ProgressStepper } from "@/components/ui-custom/progress-stepper";
 import type React from "react";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
+import type { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useToast } from "@/components/toast";
 
 type TradeType = "BUY" | "SELL";
@@ -58,6 +60,18 @@ export default function CreateAdPage() {
   const { primaryWallet } = useDynamicContext();
   const { showToast, ToastComponent } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (primaryWallet?.address) {
+      fetch(`/api/users?wallet=${primaryWallet.address}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.error) setUserProfile(data);
+        })
+        .catch(console.error);
+    }
+  }, [primaryWallet?.address]);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
@@ -93,6 +107,14 @@ export default function CreateAdPage() {
 
     if (!primaryWallet) {
       showToast({ message: "Please connect your wallet first", type: "error" });
+      return;
+    }
+
+    if (!userProfile?.telegramUsername) {
+      showToast({
+        message: "Please configure your Telegram username in your profile first",
+        type: "error",
+      });
       return;
     }
 
@@ -132,6 +154,27 @@ export default function CreateAdPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (userProfile && !userProfile.telegramUsername) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SimpleHeader />
+        <Sidebar />
+        <main className="md:ml-16 container mx-auto px-4 py-8 max-w-2xl">
+          <div className="bg-card border border-border rounded-xl p-8 text-center">
+            <h2 className="text-xl font-semibold text-card-foreground mb-4">
+              Telegram Username Required
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              To create an ad, you must set a Telegram username in your profile. This allows other
+              users to contact you.
+            </p>
+            <Button onClick={() => router.push("/profile")}>Go to Profile</Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const stepLabels = ["Basic Info", "Details", "Review"];
 
@@ -209,7 +252,7 @@ export default function CreateAdPage() {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Token Amount
+                  Token Amount <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -257,7 +300,7 @@ export default function CreateAdPage() {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Price Per {formData.token}
+                  Price Per {formData.token} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -306,7 +349,7 @@ export default function CreateAdPage() {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Payment Method
+                  Payment Method <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"

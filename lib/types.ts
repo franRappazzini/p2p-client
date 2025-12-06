@@ -8,6 +8,18 @@ export interface User {
   negativeRatings: number;
   completedTrades: number;
   reputation: number;
+  ratingSum: number;
+  ratingCount: number;
+}
+
+export interface Rating {
+  id: string;
+  fromWallet: string;
+  toWallet: string;
+  adId: string;
+  rating: number;
+  comment?: string;
+  createdAt: number;
 }
 
 export interface Ad {
@@ -27,4 +39,7 @@ export interface Ad {
   takenBy?: string;
   createdAt: number;
   expiresAt: number;
+  creationSignature?: string;
+  paidSignature?: string;
+  releaseSignature?: string;
 }
