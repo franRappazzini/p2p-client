@@ -11,7 +11,7 @@ import type { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
 
 type TradeType = "BUY" | "SELL";
 type Token = "SOL" | "USDC" | "USDT";
@@ -58,7 +58,7 @@ const tokenIcons: Record<Token, React.ReactNode> = {
 export default function CreateAdPage() {
   const router = useRouter();
   const { primaryWallet } = useDynamicContext();
-  const { showToast, ToastComponent } = useToast();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userProfile, setUserProfile] = useState<User | null>(null);
 
@@ -101,19 +101,28 @@ export default function CreateAdPage() {
     if (isSubmitting) return;
 
     if (!formData.tokenAmount || !formData.pricePerUnit || !formData.paymentMethod) {
-      showToast({ message: "Please fill in all required fields", type: "error" });
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!primaryWallet) {
-      showToast({ message: "Please connect your wallet first", type: "error" });
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!userProfile?.telegramUsername) {
-      showToast({
-        message: "Please configure your Telegram username in your profile first",
-        type: "error",
+      toast({
+        title: "Telegram Required",
+        description: "Please configure your Telegram username in your profile first.",
+        variant: "destructive",
       });
       return;
     }
@@ -141,15 +150,19 @@ export default function CreateAdPage() {
 
       if (!response.ok) throw new Error("Failed to create ad");
 
-      showToast({ message: "Ad published successfully!", type: "success" });
+      toast({
+        title: "🎉 Ad Published!",
+        description: "Redirecting to home...",
+      });
 
       setTimeout(() => {
         router.push("/");
       }, 1000);
     } catch (error) {
-      showToast({
-        message: error instanceof Error ? error.message : "Failed to publish ad",
-        type: "error",
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish ad",
+        variant: "destructive",
       });
       setIsSubmitting(false);
     }
@@ -182,7 +195,6 @@ export default function CreateAdPage() {
     <div className="min-h-screen bg-background">
       <SimpleHeader />
       <Sidebar />
-      {ToastComponent}
 
       <main className="md:ml-16 container mx-auto px-4 py-8 max-w-2xl">
         <div className="mb-8">

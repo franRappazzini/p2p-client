@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "./button";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddressDisplayProps {
   address: string;
@@ -9,15 +9,22 @@ interface AddressDisplayProps {
 }
 
 export function AddressDisplay({ address, className }: AddressDisplayProps) {
-  const { showToast } = useToast();
+  const { toast } = useToast();
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await navigator.clipboard.writeText(address);
-      showToast({ message: "Address copied to clipboard!", type: "success" });
+      toast({
+        title: "📋 Copied!",
+        description: "Address copied to clipboard.",
+      });
     } catch (err) {
-      showToast({ message: "Failed to copy address", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to copy address.",
+        variant: "destructive",
+      });
     }
   };
 

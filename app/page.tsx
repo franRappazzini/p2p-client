@@ -14,6 +14,7 @@ import { useState } from "react";
 export default function HomePage() {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
 
   const [filters, setFilters] = useState({
     type: "buy",
@@ -23,6 +24,12 @@ export default function HomePage() {
 
   const { data: allAds, loading, error, refetch } = useAds(filters);
   const ads = allAds.filter((ad) => ad.status === "active");
+
+  const handleRefresh = async () => {
+    setIsRefetching(true);
+    await refetch();
+    setTimeout(() => setIsRefetching(false), 500);
+  };
 
   const handleViewDetails = (ad: Ad) => {
     setSelectedAd(ad);
@@ -41,9 +48,32 @@ export default function HomePage() {
 
         {/* Ads Count and Sort */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
-            {loading ? "Loading..." : `${ads.length} Active Ads`}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-foreground">
+              {loading ? "Loading..." : `${ads.length} Active Ads`}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefetching}
+              title="Reload ads"
+            >
+              <svg
+                className={`w-4 h-4 ${isRefetching ? "animate-spin" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </Button>
+          </div>
           <div className="flex items-center gap-4">
             <Link href="/create">
               <Button>Create Ad</Button>

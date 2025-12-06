@@ -7,11 +7,13 @@ import { AddressDisplay } from "./ui-custom/address-display";
 import { Avatar } from "./ui-custom/avatar";
 import { Badge } from "./ui-custom/badge";
 import { Button } from "./ui-custom/button";
+import Link from "next/link";
 import { Modal } from "./ui-custom/modal";
 import { StatusStepper } from "./ui-custom/status-stepper";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useProgram } from "@/hooks/use-program";
-import { useToast } from "@/components/toast";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdDetailModalProps {
   ad: Ad | null;
@@ -25,9 +27,9 @@ const MINT_MAP: Record<string, string> = {
   // SOL: "So11111111111111111111111111111111111111112",
   // USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   // USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-  SOL: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
-  USDC: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
-  USDT: "CgQcRciW86L748HKmDuXCPaSjVi3pzWf8woysdDBNuqh",
+  SOL: "8xHZCmJc6JTM6mbQoUCqgE13KEwe9iJcf7vQReqLoctv",
+  USDC: "8xHZCmJc6JTM6mbQoUCqgE13KEwe9iJcf7vQReqLoctv",
+  USDT: "8xHZCmJc6JTM6mbQoUCqgE13KEwe9iJcf7vQReqLoctv",
 };
 
 export function AdDetailModal({
@@ -39,7 +41,8 @@ export function AdDetailModal({
 }: AdDetailModalProps) {
   const { primaryWallet } = useDynamicContext();
   const { createEscrow, markAsPaid, releaseTokens } = useProgram();
-  const { showToast } = useToast();
+  const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [creator, setCreator] = useState<User | null>(null);
   const [taker, setTaker] = useState<User | null>(null);
@@ -109,9 +112,10 @@ export function AdDetailModal({
     if (!primaryWallet) return;
 
     if (!currentUser?.telegramUsername) {
-      showToast({
-        message: "You must set a Telegram username in your profile to take ads.",
-        type: "error",
+      toast({
+        title: "Telegram Required",
+        description: "You must set a Telegram username in your profile to take ads.",
+        variant: "destructive",
       });
       return;
     }
@@ -127,12 +131,20 @@ export function AdDetailModal({
         }),
       });
       if (!res.ok) throw new Error("Failed to take ad");
-      showToast({ message: "Ad taken! Contact the seller.", type: "success" });
+      toast({
+        title: "✅ Ad Taken!",
+        description: "Redirecting to dashboard...",
+      });
       if (onUpdate) onUpdate();
       onClose();
+      setTimeout(() => router.push("/dashboard"), 500);
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to take ad", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to take ad. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -161,12 +173,19 @@ export function AdDetailModal({
         }),
       });
 
-      showToast({ message: "Escrow created on-chain!", type: "success" });
+      toast({
+        title: "✅ Escrow Created!",
+        description: "The escrow has been created on-chain successfully.",
+      });
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to create escrow", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to create escrow. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +196,10 @@ export function AdDetailModal({
     setIsLoading(true);
     try {
       const tx = await markAsPaid(ad.escrowId);
-      showToast({ message: "Marked as paid on-chain!", type: "success" });
+      toast({
+        title: "✅ Payment Marked!",
+        description: "Waiting for seller to release tokens.",
+      });
 
       await fetch(`/api/ads/${ad.id}`, {
         method: "PATCH",
@@ -189,7 +211,11 @@ export function AdDetailModal({
       onClose();
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to mark as paid", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to mark as paid. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +226,10 @@ export function AdDetailModal({
     setIsLoading(true);
     try {
       const tx = await releaseTokens(ad.escrowId);
-      showToast({ message: "Tokens released! Trade completed.", type: "success" });
+      toast({
+        title: "🎉 Trade Completed!",
+        description: "Tokens have been released successfully.",
+      });
 
       await fetch(`/api/ads/${ad.id}`, {
         method: "PATCH",
@@ -212,7 +241,11 @@ export function AdDetailModal({
       onClose();
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to release tokens", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to release tokens. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -239,11 +272,18 @@ export function AdDetailModal({
 
       if (res.ok) {
         setHasRated(true);
-        showToast({ message: "Rating submitted!", type: "success" });
+        toast({
+          title: "⭐ Rating Submitted!",
+          description: "Thank you for your feedback.",
+        });
       }
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to submit rating", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to submit rating. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -273,10 +313,6 @@ export function AdDetailModal({
   const truncateWallet = (wallet: string) => {
     return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
   };
-
-  const mockRating = 4.8;
-  const mockCompletedTrades = 23;
-  const mockSuccessRate = 96;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -328,15 +364,37 @@ export function AdDetailModal({
 
         {/* Creator Profile */}
         <div className="bg-card border border-border rounded-xl p-4 mb-6">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">
-            {isCreator ? "Your Profile (Creator)" : "Creator Profile"}
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-card-foreground">
+              {isCreator ? "Your Profile (Creator)" : "Creator Profile"}
+            </h3>
+            <Link
+              href={`/profile/${ad.creatorWallet}`}
+              className="text-xs text-primary hover:underline"
+              target="_blank"
+            >
+              View Profile
+            </Link>
+          </div>
           <div className="flex items-start gap-3 mb-4">
-            <Avatar src={creator?.avatar} alt={ad.creatorWallet} size="md" />
+            <Link href={`/profile/${ad.creatorWallet}`} target="_blank">
+              <Avatar
+                src={creator?.avatar}
+                alt={ad.creatorWallet}
+                size="md"
+                className="cursor-pointer hover:opacity-80"
+              />
+            </Link>
             <div className="flex-1">
-              <p className="font-semibold text-card-foreground">
-                {creator?.username || <AddressDisplay address={ad.creatorWallet} />}
-              </p>
+              <Link
+                href={`/profile/${ad.creatorWallet}`}
+                target="_blank"
+                className="hover:underline"
+              >
+                <p className="font-semibold text-card-foreground">
+                  {creator?.username || <AddressDisplay address={ad.creatorWallet} />}
+                </p>
+              </Link>
               {creator?.username && (
                 <AddressDisplay
                   address={ad.creatorWallet}
@@ -348,14 +406,27 @@ export function AdDetailModal({
               )}
               <div className="flex items-center gap-1 mt-1">
                 <div className="flex">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className="text-warning text-sm">
-                      ★
-                    </span>
-                  ))}
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const rating = creator?.ratingCount
+                      ? creator.ratingSum / creator.ratingCount
+                      : 0;
+                    return (
+                      <span
+                        key={i}
+                        className={`text-sm ${
+                          i < Math.round(rating) ? "text-warning" : "text-muted"
+                        }`}
+                      >
+                        ★
+                      </span>
+                    );
+                  })}
                 </div>
                 <span className="text-sm text-muted-foreground ml-1">
-                  {mockRating} ({creator?.completedTrades || mockCompletedTrades} trades)
+                  {creator?.ratingCount
+                    ? (creator.ratingSum / creator.ratingCount).toFixed(1)
+                    : "N/A"}{" "}
+                  ({creator?.ratingCount || 0} trades)
                 </span>
               </div>
             </div>
@@ -365,15 +436,31 @@ export function AdDetailModal({
         {/* Taker Profile (if exists and user is creator) */}
         {isCreator && ad.takenBy && (
           <div className="bg-card border border-border rounded-xl p-4 mb-6">
-            <h3 className="text-sm font-semibold text-card-foreground mb-3">
-              Counterparty (Taker)
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-card-foreground">Counterparty (Taker)</h3>
+              <Link
+                href={`/profile/${ad.takenBy}`}
+                className="text-xs text-primary hover:underline"
+                target="_blank"
+              >
+                View Profile
+              </Link>
+            </div>
             <div className="flex items-start gap-3 mb-4">
-              <Avatar src={taker?.avatar} alt={ad.takenBy} size="md" />
+              <Link href={`/profile/${ad.takenBy}`} target="_blank">
+                <Avatar
+                  src={taker?.avatar}
+                  alt={ad.takenBy}
+                  size="md"
+                  className="cursor-pointer hover:opacity-80"
+                />
+              </Link>
               <div className="flex-1">
-                <p className="font-semibold text-card-foreground">
-                  {taker?.username || <AddressDisplay address={ad.takenBy} />}
-                </p>
+                <Link href={`/profile/${ad.takenBy}`} target="_blank" className="hover:underline">
+                  <p className="font-semibold text-card-foreground">
+                    {taker?.username || <AddressDisplay address={ad.takenBy} />}
+                  </p>
+                </Link>
                 {taker?.username && (
                   <AddressDisplay address={ad.takenBy} className="text-xs text-muted-foreground" />
                 )}
@@ -381,8 +468,24 @@ export function AdDetailModal({
                   <p className="text-sm text-primary mt-1">@{taker.telegramUsername}</p>
                 )}
                 <div className="flex items-center gap-1 mt-1">
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const rating = taker?.ratingCount ? taker.ratingSum / taker.ratingCount : 0;
+                      return (
+                        <span
+                          key={i}
+                          className={`text-sm ${
+                            i < Math.round(rating) ? "text-warning" : "text-muted"
+                          }`}
+                        >
+                          ★
+                        </span>
+                      );
+                    })}
+                  </div>
                   <span className="text-sm text-muted-foreground ml-1">
-                    {taker?.completedTrades || 0} completed trades
+                    {taker?.ratingCount ? (taker.ratingSum / taker.ratingCount).toFixed(1) : "N/A"}{" "}
+                    ({taker?.ratingCount || 0} trades)
                   </span>
                 </div>
               </div>

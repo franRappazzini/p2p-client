@@ -1,9 +1,10 @@
 "use client";
 
+import { AuthWatcher } from "@/components/auth-watcher";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { SolanaWalletConnectors } from "@dynamic-labs/solana";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthWatcher } from "@/components/auth-watcher";
+import { Toaster } from "@/components/ui/toaster";
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ function Providers({ children }: { children: React.ReactNode }) {
       >
         <AuthWatcher />
         {children}
+        <Toaster />
       </DynamicContextProvider>
     </ThemeProvider>
   );

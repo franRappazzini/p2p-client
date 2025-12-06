@@ -11,7 +11,6 @@ import { SimpleHeader } from "@/components/simple-header";
 import { TableSkeleton } from "@/components/loading-skeleton";
 import { Tabs } from "@/components/ui-custom/tabs";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { useToast } from "@/components/toast";
 
 function EscrowTable({
   ads,
@@ -121,9 +120,9 @@ function EscrowTable({
 
 export default function DashboardPage() {
   const { primaryWallet } = useDynamicContext();
-  const { ToastComponent } = useToast();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -151,6 +150,12 @@ export default function DashboardPage() {
       fetchAds();
     }
   }, [primaryWallet]);
+
+  const handleRefresh = async () => {
+    setIsRefetching(true);
+    await fetchAds();
+    setTimeout(() => setIsRefetching(false), 500);
+  };
 
   const handleViewDetails = (ad: Ad) => {
     setSelectedAd(ad);
@@ -192,11 +197,7 @@ export default function DashboardPage() {
       id: "completed",
       label: "Completed",
       content: (
-        <EscrowTable
-          ads={completedAds}
-          showLoading={isLoading}
-          onViewDetails={handleViewDetails}
-        />
+        <EscrowTable ads={completedAds} showLoading={isLoading} onViewDetails={handleViewDetails} />
       ),
     },
   ];
@@ -205,12 +206,29 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <SimpleHeader />
       <Sidebar />
-      {ToastComponent}
 
       <main className="md:ml-16 container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Manage your P2P trades</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">Manage your P2P trades</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefetching}>
+            <svg
+              className={`w-4 h-4 mr-2 ${isRefetching ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Refresh
+          </Button>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">

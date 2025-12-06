@@ -36,6 +36,8 @@ export async function POST(request: Request) {
       negativeRatings: 0,
       completedTrades: 0,
       reputation: 0,
+      ratingSum: 0,
+      ratingCount: 0,
     };
 
     const createdUser = db.users.create(newUser);

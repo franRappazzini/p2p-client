@@ -1,8 +1,9 @@
 "use client";
 
-import { mockAnnouncements, mockReviews } from "@/lib/mock-data";
-import { useEffect, useState } from "react";
+import { Ad, Rating, User } from "@/lib/types";
+import { ChangeEvent, useEffect, useState } from "react";
 
+import { AdDetailModal } from "@/components/ad-detail-modal";
 import { AddressDisplay } from "@/components/ui-custom/address-display";
 import { Avatar } from "@/components/ui-custom/avatar";
 import { Badge } from "@/components/ui-custom/badge";
@@ -11,9 +12,9 @@ import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
 import { StatCard } from "@/components/ui-custom/stat-card";
 import { Tabs } from "@/components/ui-custom/tabs";
-import { User } from "@/lib/types";
+import { formatDistanceToNow } from "date-fns";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -36,10 +37,14 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ProfilePage() {
   const { primaryWallet } = useDynamicContext();
-  const { showToast, ToastComponent } = useToast();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [reviews, setReviews] = useState<Rating[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     telegramUsername: "",
@@ -49,8 +54,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (primaryWallet?.address) {
       fetchUser(primaryWallet.address);
+      fetchReviews(primaryWallet.address);
+      fetchAds(primaryWallet.address);
     }
-  }, [primaryWallet?.address]);
+  }, [primaryWallet]);
 
   const fetchUser = async (wallet: string) => {
     try {
@@ -71,7 +78,52 @@ export default function ProfilePage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fetchReviews = async (wallet: string) => {
+    try {
+      const res = await fetch(`/api/ratings?wallet=${wallet}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch reviews", error);
+    }
+  };
+
+  const fetchAds = async (wallet: string) => {
+    try {
+      const res = await fetch("/api/ads");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const userAds = data.filter(
+            (ad: Ad) => ad.creatorWallet === wallet || ad.takenBy === wallet
+          );
+          setAds(userAds);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch ads", error);
+    }
+  };
+
+  const handleViewDetails = (ad: Ad) => {
+    setSelectedAd(ad);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedAd(null);
+  };
+
+  const handleAdUpdate = () => {
+    if (primaryWallet?.address) {
+      fetchAds(primaryWallet.address);
+    }
+  };
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -99,13 +151,20 @@ export default function ProfilePage() {
         const updatedUser = await res.json();
         setUser(updatedUser);
         setIsEditing(false);
-        showToast({ message: "Profile updated successfully!", type: "success" });
+        toast({
+          title: "✅ Profile Updated!",
+          description: "Your profile has been updated successfully.",
+        });
       } else {
         throw new Error("Failed to update");
       }
     } catch (error) {
       console.error(error);
-      showToast({ message: "Failed to update profile", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -125,38 +184,43 @@ export default function ProfilePage() {
     );
   }
 
-  const userAnnouncements = mockAnnouncements.slice(0, 3);
+  const activeAds = ads.filter(
+    (ad) => ad.creatorWallet === primaryWallet?.address && ad.status === "active"
+  );
+  const completedAds = ads.filter((ad) => ad.status === "completed");
 
   const tabContent = {
     active: (
       <div className="space-y-4">
-        {userAnnouncements.map((announcement) => (
+        {activeAds.map((ad) => (
           <div
-            key={announcement.id}
+            key={ad.id}
             className="bg-card border border-border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4">
-              <Badge variant={announcement.type === "BUY" ? "buy" : "sell"} size="sm">
-                {announcement.type}
+              <Badge variant={ad.type === "buy" ? "buy" : "sell"} size="sm">
+                {ad.type.toUpperCase()}
               </Badge>
               <div>
                 <p className="font-semibold text-card-foreground">
-                  {announcement.tokenAmount} {announcement.token}
+                  {ad.tokenAmount} {ad.tokenMint}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  → ${announcement.fiatAmount} {announcement.fiat}
+                  → ${ad.fiatAmount} {ad.fiatCurrency}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">{announcement.timeLeft} left</span>
-              <Button variant="outline" size="sm">
+              <span className="text-sm text-muted-foreground">
+                {formatDistanceToNow(ad.createdAt, { addSuffix: true })}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => handleViewDetails(ad)}>
                 View
               </Button>
             </div>
           </div>
         ))}
-        {userAnnouncements.length === 0 && (
+        {activeAds.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <svg
@@ -173,16 +237,16 @@ export default function ProfilePage() {
                 />
               </svg>
             </div>
-            <p className="text-muted-foreground">No active announcements</p>
+            <p className="text-muted-foreground">No active ads</p>
           </div>
         )}
       </div>
     ),
     completed: (
       <div className="space-y-4">
-        {mockAnnouncements.slice(3, 6).map((announcement) => (
+        {completedAds.map((ad) => (
           <div
-            key={announcement.id}
+            key={ad.id}
             className="bg-card border border-border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4">
@@ -191,33 +255,48 @@ export default function ProfilePage() {
               </Badge>
               <div>
                 <p className="font-semibold text-card-foreground">
-                  {announcement.tokenAmount} {announcement.token}
+                  {ad.tokenAmount} {ad.tokenMint}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  → ${announcement.fiatAmount} {announcement.fiat}
+                  → ${ad.fiatAmount} {ad.fiatCurrency}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">{announcement.createdAt}</span>
-              <Button variant="ghost" size="sm">
+              <span className="text-sm text-muted-foreground">
+                {new Date(ad.createdAt).toLocaleDateString()}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ad)}>
                 Details
               </Button>
             </div>
           </div>
         ))}
+        {completedAds.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">No completed trades yet</div>
+        )}
       </div>
     ),
     reviews: (
       <div className="space-y-4">
-        {mockReviews.map((review) => (
+        {reviews.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">No reviews yet</div>
+        )}
+        {reviews.map((review) => (
           <div key={review.id} className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-start gap-4 mb-3">
-              <Avatar src={review.reviewer.avatar} alt={review.reviewer.username} size="md" />
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-xs font-mono">{review.fromWallet.slice(0, 2)}</span>
+              </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <p className="font-medium text-card-foreground">{review.reviewer.username}</p>
-                  <span className="text-sm text-muted-foreground">{review.date}</span>
+                  <AddressDisplay
+                    address={review.fromWallet}
+                    className="font-medium text-card-foreground"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 mt-1">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -235,7 +314,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-            <p className="text-muted-foreground">{review.text}</p>
+            <p className="text-muted-foreground">{review.comment}</p>
           </div>
         ))}
       </div>
@@ -248,11 +327,15 @@ export default function ProfilePage() {
     { id: "reviews", label: "Reviews", content: tabContent.reviews },
   ];
 
+  const cancelledAds = ads.filter((ad) => ad.status === "cancelled");
+  const finishedCount = completedAds.length + cancelledAds.length;
+  const successRate =
+    finishedCount > 0 ? Math.round((completedAds.length / finishedCount) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <SimpleHeader />
       <Sidebar />
-      {ToastComponent}
 
       <main className="md:ml-16 container mx-auto px-4 py-8">
         {/* Profile Header */}
@@ -334,23 +417,21 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                    <StarRating rating={4.8} />
-                    <span className="text-muted-foreground">4.8 (24 reviews)</span>
+                    <StarRating
+                      rating={
+                        user?.ratingCount && user.ratingCount > 0
+                          ? user.ratingSum / user.ratingCount
+                          : 0
+                      }
+                    />
+                    <span className="text-muted-foreground">
+                      {user?.ratingCount && user.ratingCount > 0
+                        ? (user.ratingSum / user.ratingCount).toFixed(1)
+                        : "0.0"}{" "}
+                      ({user?.ratingCount || 0} reviews)
+                    </span>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                      />
-                    </svg>
                     Edit Profile
                   </Button>
                 </>
@@ -363,7 +444,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Completed Trades"
-            value={user?.completedTrades || 0}
+            value={completedAds.length}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -377,7 +458,7 @@ export default function ProfilePage() {
           />
           <StatCard
             title="Success Rate"
-            value="98%"
+            value={`${successRate}%`}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -391,7 +472,11 @@ export default function ProfilePage() {
           />
           <StatCard
             title="Rating"
-            value="★ 4.8"
+            value={`★ ${
+              user?.ratingCount && user.ratingCount > 0
+                ? (user.ratingSum / user.ratingCount).toFixed(1)
+                : "0.0"
+            }`}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -424,6 +509,14 @@ export default function ProfilePage() {
           <Tabs tabs={tabs} />
         </div>
       </main>
+
+      <AdDetailModal
+        ad={selectedAd}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        showEscrowProgress={true}
+        onUpdate={handleAdUpdate}
+      />
     </div>
   );
 }
