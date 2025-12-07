@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { SimpleHeader } from "@/components/simple-header"
-import { Sidebar } from "@/components/sidebar"
-import { Button } from "@/components/ui-custom/button"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { Button } from "@/components/ui-custom/button";
+import Link from "next/link";
+import { Sidebar } from "@/components/sidebar";
+import { SimpleHeader } from "@/components/simple-header";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const steps = [
   {
@@ -72,7 +72,7 @@ const steps = [
       </svg>
     ),
   },
-]
+];
 
 const faqs = [
   {
@@ -103,9 +103,9 @@ const faqs = [
   {
     question: "Are there any fees?",
     answer:
-      "We charge a small fee (typically 0.5-1%) on completed trades. This fee is split between both parties. There are no fees for creating announcements or for trades that don't complete.",
+      "We charge a small fee (0.5%) on completed trades. This fee is split between both parties. There are no fees for creating announcements or for trades that don't complete.",
   },
-]
+];
 
 function AccordionItem({
   question,
@@ -113,17 +113,20 @@ function AccordionItem({
   isOpen,
   onClick,
 }: {
-  question: string
-  answer: string
-  isOpen: boolean
-  onClick: () => void
+  question: string;
+  answer: string;
+  isOpen: boolean;
+  onClick: () => void;
 }) {
   return (
     <div className="border-b border-border last:border-0">
       <button onClick={onClick} className="w-full py-5 flex items-center justify-between text-left">
         <span className="font-medium text-card-foreground pr-4">{question}</span>
         <svg
-          className={cn("w-5 h-5 text-muted-foreground transition-transform flex-shrink-0", isOpen && "rotate-180")}
+          className={cn(
+            "w-5 h-5 text-muted-foreground transition-transform flex-shrink-0",
+            isOpen && "rotate-180"
+          )}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -131,15 +134,20 @@ function AccordionItem({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      <div className={cn("overflow-hidden transition-all duration-300", isOpen ? "max-h-96 pb-5" : "max-h-0")}>
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300",
+          isOpen ? "max-h-96 pb-5" : "max-h-0"
+        )}
+      >
         <p className="text-muted-foreground">{answer}</p>
       </div>
     </div>
-  )
+  );
 }
 
 export default function HowItWorksPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,8 +163,8 @@ export default function HowItWorksPage() {
               How P2P Escrow Works
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground text-pretty">
-              Secure, trustless cryptocurrency trading powered by Solana smart contracts. Trade with confidence knowing
-              your funds are protected.
+              Secure, trustless cryptocurrency trading powered by Solana smart contracts. Trade with
+              confidence knowing your funds are protected.
             </p>
           </div>
         </div>
@@ -183,7 +191,9 @@ export default function HowItWorksPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-sm font-semibold text-primary">Step {step.number}</span>
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">{step.title}</h3>
+                  <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+                    {step.title}
+                  </h3>
                   <p className="text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </div>
@@ -196,7 +206,9 @@ export default function HowItWorksPage() {
       <section className="bg-muted/30 py-16">
         <div className="md:ml-16 container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-12">Why Choose Our Escrow?</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
+              Why Choose Our Escrow?
+            </h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-card border border-border rounded-xl p-6 text-center">
                 <div className="w-12 h-12 rounded-full bg-success/10 text-success mx-auto mb-4 flex items-center justify-center">
@@ -217,7 +229,12 @@ export default function HowItWorksPage() {
               <div className="bg-card border border-border rounded-xl p-6 text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
                 <h3 className="font-semibold text-card-foreground mb-2">Lightning Fast</h3>
@@ -269,7 +286,9 @@ export default function HowItWorksPage() {
       {/* CTA */}
       <section className="bg-primary/5 py-16">
         <div className="md:ml-16 container mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Ready to Start Trading?</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+            Ready to Start Trading?
+          </h2>
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
             Join thousands of traders using secure P2P escrow. Create your first ad today.
           </p>
@@ -278,7 +297,12 @@ export default function HowItWorksPage() {
               <Button variant="primary" size="lg">
                 Start Trading
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
                 </svg>
               </Button>
             </Link>
@@ -297,7 +321,12 @@ export default function HowItWorksPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-primary-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -310,13 +339,22 @@ export default function HowItWorksPage() {
             </div>
             <p className="text-sm text-muted-foreground">© 2025 SolEscrow. All rights reserved.</p>
             <div className="flex gap-4">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Terms
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Privacy
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Support
               </a>
             </div>
@@ -324,5 +362,5 @@ export default function HowItWorksPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

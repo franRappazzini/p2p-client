@@ -18,7 +18,11 @@ export function useProgram() {
   const { primaryWallet, networkConfigurations } = useDynamicContext();
 
   const connection = useMemo(() => {
-    return new Connection("http://127.0.0.1:8899", "confirmed");
+    // HTTP endpoint for RPC calls, WebSocket endpoint for subscriptions/events
+    return new Connection("http://127.0.0.1:8899", {
+      commitment: "confirmed",
+      wsEndpoint: "ws://127.0.0.1:8900",
+    });
   }, []);
 
   const provider = useMemo(() => {
@@ -43,6 +47,7 @@ export function useProgram() {
 
     return new AnchorProvider(connection, wallet as any, {
       preflightCommitment: "confirmed",
+      commitment: "confirmed",
     });
   }, [primaryWallet, connection]);
 
@@ -122,12 +127,27 @@ export function useProgram() {
       PROGRAM_ID
     );
 
+    // Fetch escrow to get mint
+    const escrowAccount = await program.account.escrow.fetch(escrow);
+    const mintPubkey = escrowAccount.mint as PublicKey;
+
+    // Derive buyer ATA
+    const [buyerAta] = PublicKey.findProgramAddressSync(
+      [provider.publicKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mintPubkey.toBuffer()],
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
     return program.methods
       .markEscrowAsPaid(escrowIdBn)
       .accounts({
         buyer: provider.publicKey,
         globalConfig,
         escrow,
+        mint: mintPubkey,
+        buyerAta,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
       })
       .rpc();
   };
@@ -169,14 +189,12 @@ export function useProgram() {
     return program.methods
       .releaseTokensInEscrow(escrowIdBn)
       .accounts({
-        buyer: buyerPubkey,
         seller: provider.publicKey,
         globalConfig,
         escrow,
         mint: mintPubkey,
         mintVault,
         mintVaultAta,
-        buyerAta,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

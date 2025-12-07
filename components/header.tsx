@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "./ui-custom/button"
-import { ThemeToggle } from "./theme-toggle"
-import { cn } from "@/lib/utils"
+import { Button } from "./ui-custom/button";
+import Link from "next/link";
+import { NotificationsPopover } from "./notifications-popover";
+import { ThemeToggle } from "./theme-toggle";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -16,7 +17,12 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-primary-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -58,11 +64,17 @@ export function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <NotificationsPopover />
             <ThemeToggle />
             <Link href="/create">
               <Button variant="outline" size="sm">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Create Announcement
               </Button>
@@ -82,6 +94,7 @@ export function Header() {
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
+            <NotificationsPopover />
             <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -89,11 +102,21 @@ export function Header() {
             >
               {mobileMenuOpen ? (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
@@ -104,7 +127,7 @@ export function Header() {
         <div
           className={cn(
             "md:hidden overflow-hidden transition-all duration-300",
-            mobileMenuOpen ? "max-h-80 pb-4" : "max-h-0",
+            mobileMenuOpen ? "max-h-80 pb-4" : "max-h-0"
           )}
         >
           <nav className="flex flex-col gap-2 pt-4">
@@ -146,5 +169,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -539,6 +539,78 @@ export type P2p = {
               }
             ];
           };
+        },
+        {
+          name: "mint";
+          relations: ["escrow"];
+        },
+        {
+          name: "buyerAta";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "buyer";
+              },
+              {
+                kind: "account";
+                path: "tokenProgram";
+              },
+              {
+                kind: "account";
+                path: "mint";
+              }
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+        },
+        {
+          name: "tokenProgram";
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
         }
       ];
       args: [
@@ -552,11 +624,6 @@ export type P2p = {
       name: "releaseTokensInEscrow";
       discriminator: [18, 146, 38, 10, 112, 236, 190, 231];
       accounts: [
-        {
-          name: "buyer";
-          writable: true;
-          relations: ["escrow"];
-        },
         {
           name: "seller";
           writable: true;
@@ -674,7 +741,8 @@ export type P2p = {
             seeds: [
               {
                 kind: "account";
-                path: "buyer";
+                path: "escrow.buyer";
+                account: "escrow";
               },
               {
                 kind: "account";
@@ -1393,6 +1461,10 @@ export type P2p = {
             type: "pubkey";
           },
           {
+            name: "buyer";
+            type: "pubkey";
+          },
+          {
             name: "mint";
             type: "pubkey";
           },
@@ -1559,6 +1631,28 @@ export type P2p = {
           }
         ];
       };
+    }
+  ];
+  constants: [
+    {
+      name: "disputeVaultSeed";
+      type: "bytes";
+      value: "[100, 105, 115, 112, 117, 116, 101, 95, 118, 97, 117, 108, 116]";
+    },
+    {
+      name: "escrowSeed";
+      type: "bytes";
+      value: "[101, 115, 99, 114, 111, 119]";
+    },
+    {
+      name: "globalConfigSeed";
+      type: "bytes";
+      value: "[103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]";
+    },
+    {
+      name: "mintVaultSeed";
+      type: "bytes";
+      value: "[109, 105, 110, 116, 95, 118, 97, 117, 108, 116]";
     }
   ];
 };
