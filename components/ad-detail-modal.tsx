@@ -9,7 +9,9 @@ import { Badge } from "./ui-custom/badge";
 import { Button } from "./ui-custom/button";
 import Link from "next/link";
 import { Modal } from "./ui-custom/modal";
+import { PublicKey } from "@solana/web3.js";
 import { StatusStepper } from "./ui-custom/status-stepper";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useProgram } from "@/hooks/use-program";
 import { useRouter } from "next/navigation";
@@ -27,9 +29,9 @@ const MINT_MAP: Record<string, string> = {
   // SOL: "So11111111111111111111111111111111111111112",
   // USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   // USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-  SOL: "6utP5msUtHD5czVwFR3T72ELPg85FNp51Mo98yHbKVjn",
-  USDC: "6utP5msUtHD5czVwFR3T72ELPg85FNp51Mo98yHbKVjn",
-  USDT: "6utP5msUtHD5czVwFR3T72ELPg85FNp51Mo98yHbKVjn",
+  SOL: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
+  USDC: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
+  USDT: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
 };
 
 export function AdDetailModal({
@@ -40,7 +42,7 @@ export function AdDetailModal({
   onUpdate,
 }: AdDetailModalProps) {
   const { primaryWallet } = useDynamicContext();
-  const { createEscrow, markAsPaid, releaseTokens } = useProgram();
+  const { createEscrow, markAsPaid, releaseTokens, connection } = useProgram();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,38 @@ export function AdDetailModal({
   const [hasRated, setHasRated] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [hasContacted, setHasContacted] = useState(false);
+
+  const checkTakerBalance = async (): Promise<boolean> => {
+    if (!primaryWallet || !connection || !ad) return false;
+
+    try {
+      const userPubkey = new PublicKey(primaryWallet.address);
+      const tokenAmount = ad.tokenAmount;
+      const mintAddress = MINT_MAP[ad.tokenMint];
+
+      if (ad.tokenMint === "SOL") {
+        const balance = await connection.getBalance(userPubkey);
+        const balanceInSol = balance / 1e9;
+        return balanceInSol >= tokenAmount;
+      } else {
+        const mintPubkey = new PublicKey(mintAddress);
+        const ata = getAssociatedTokenAddressSync(mintPubkey, userPubkey);
+
+        try {
+          const tokenAccount = await connection.getTokenAccountBalance(ata);
+          const balance =
+            parseFloat(tokenAccount.value.amount) / Math.pow(10, tokenAccount.value.decimals);
+          return balance >= tokenAmount;
+        } catch {
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking balance:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (primaryWallet?.address) {
@@ -118,6 +152,19 @@ export function AdDetailModal({
         variant: "destructive",
       });
       return;
+    }
+
+    // Check balance for BUY ads (taker is selling)
+    if (ad.type === "buy") {
+      const hasBalance = await checkTakerBalance();
+      if (!hasBalance) {
+        toast({
+          title: "Insufficient Balance",
+          description: `You don't have enough ${ad.tokenMint} to take this ad.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -621,15 +668,33 @@ export function AdDetailModal({
           )}
 
           {canTake && (
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={handleTakeAd}
-              disabled={isLoading}
-            >
-              {isLoading ? "Processing..." : "Take Ad"}
-            </Button>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-2 p-3 bg-muted/30 rounded-lg border border-border">
+                <input
+                  type="checkbox"
+                  id="contact-check"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={hasContacted}
+                  onChange={(e) => setHasContacted(e.target.checked)}
+                />
+                <label htmlFor="contact-check" className="text-sm text-muted-foreground">
+                  I have contacted{" "}
+                  <span className="font-semibold text-card-foreground">
+                    @{creator?.telegramUsername || "the seller"}
+                  </span>{" "}
+                  on Telegram to coordinate the trade details.
+                </label>
+              </div>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={handleTakeAd}
+                disabled={isLoading || !hasContacted}
+              >
+                {isLoading ? "Processing..." : "Take Ad"}
+              </Button>
+            </div>
           )}
 
           {canCreateEscrow && (

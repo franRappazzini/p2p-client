@@ -149,6 +149,12 @@ export default function DashboardPage() {
     if (primaryWallet) {
       fetchAds();
     }
+
+    const handleRefresh = () => {
+      if (primaryWallet) fetchAds();
+    };
+    window.addEventListener("p2p-refresh-ads", handleRefresh);
+    return () => window.removeEventListener("p2p-refresh-ads", handleRefresh);
   }, [primaryWallet]);
 
   const handleRefresh = async () => {

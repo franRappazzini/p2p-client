@@ -29,6 +29,7 @@ export function EventsWatcher() {
             title: "New Trade Offer",
             description: `You have a new trade offer for ${event.amount.toString()} tokens.`,
           });
+          window.dispatchEvent(new CustomEvent("p2p-refresh-ads"));
         }
       } catch (e) {
         console.error("Error handling escrowCreated event", e);
@@ -44,6 +45,7 @@ export function EventsWatcher() {
             title: "Payment Marked",
             description: `Buyer has marked escrow #${event.id.toString()} as paid.`,
           });
+          window.dispatchEvent(new CustomEvent("p2p-refresh-ads"));
         }
       } catch (e) {
         console.error("Error handling markEscrowAsPaid event", e);
@@ -59,6 +61,7 @@ export function EventsWatcher() {
             title: "Tokens Released",
             description: `Seller has released ${event.amount.toString()} tokens from escrow #${event.id.toString()}.`,
           });
+          window.dispatchEvent(new CustomEvent("p2p-refresh-ads"));
         }
       } catch (e) {
         console.error("Error handling tokensReleased event", e);

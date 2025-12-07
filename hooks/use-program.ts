@@ -205,6 +205,7 @@ export function useProgram() {
   return {
     program,
     provider,
+    connection,
     createEscrow,
     markAsPaid,
     releaseTokens,

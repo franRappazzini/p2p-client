@@ -4,18 +4,27 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui-custom/button";
 import { ProgressStepper } from "@/components/ui-custom/progress-stepper";
+import { PublicKey } from "@solana/web3.js";
 import type React from "react";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
 import type { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useProgram } from "@/hooks/use-program";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 type TradeType = "BUY" | "SELL";
 type Token = "SOL" | "USDC" | "USDT";
 type Fiat = "USD" | "EUR" | "ARS";
+
+const MINT_MAP: Record<Token, string> = {
+  SOL: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
+  USDC: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
+  USDT: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
+};
 
 interface FormData {
   type: TradeType;
@@ -59,6 +68,7 @@ export default function CreateAdPage() {
   const router = useRouter();
   const { primaryWallet } = useDynamicContext();
   const { toast } = useToast();
+  const { connection } = useProgram();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userProfile, setUserProfile] = useState<User | null>(null);
 
@@ -97,6 +107,37 @@ export default function CreateAdPage() {
     return "0.00";
   };
 
+  const checkBalance = async (): Promise<boolean> => {
+    if (!primaryWallet || !connection) return false;
+
+    try {
+      const userPubkey = new PublicKey(primaryWallet.address);
+      const tokenAmount = parseFloat(formData.tokenAmount);
+      const mintAddress = MINT_MAP[formData.token];
+
+      if (formData.token === "SOL") {
+        const balance = await connection.getBalance(userPubkey);
+        const balanceInSol = balance / 1e9;
+        return balanceInSol >= tokenAmount;
+      } else {
+        const mintPubkey = new PublicKey(mintAddress);
+        const ata = getAssociatedTokenAddressSync(mintPubkey, userPubkey);
+
+        try {
+          const tokenAccount = await connection.getTokenAccountBalance(ata);
+          const balance =
+            parseFloat(tokenAccount.value.amount) / Math.pow(10, tokenAccount.value.decimals);
+          return balance >= tokenAmount;
+        } catch {
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking balance:", error);
+      return false;
+    }
+  };
+
   const handlePublish = async () => {
     if (isSubmitting) return;
 
@@ -125,6 +166,19 @@ export default function CreateAdPage() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check balance for SELL ads
+    if (formData.type === "SELL") {
+      const hasBalance = await checkBalance();
+      if (!hasBalance) {
+        toast({
+          title: "Insufficient Balance",
+          description: `You don't have enough ${formData.token} to create this sell ad.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);

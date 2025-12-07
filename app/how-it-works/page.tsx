@@ -26,6 +26,22 @@ const steps = [
   },
   {
     number: 2,
+    title: "Contact via Telegram",
+    description:
+      "Before taking an ad, you must contact the counterparty on Telegram to coordinate the trade details and ensure both parties are online.",
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+        />
+      </svg>
+    ),
+  },
+  {
+    number: 3,
     title: "Funds Locked in Smart Contract",
     description:
       'When a trade is initiated, the seller{"\'"}s crypto is automatically locked in a secure Solana smart contract. Neither party can access the funds until conditions are met.',
@@ -41,7 +57,7 @@ const steps = [
     ),
   },
   {
-    number: 3,
+    number: 4,
     title: "Complete Fiat Payment Off-chain",
     description:
       "The buyer sends fiat payment through the agreed payment method (bank transfer, PayPal, etc.). Both parties communicate to confirm the payment.",
@@ -57,7 +73,7 @@ const steps = [
     ),
   },
   {
-    number: 4,
+    number: 5,
     title: "Release Crypto or Dispute",
     description:
       'Once payment is confirmed, the seller releases the crypto to the buyer. If there{"\'"}s a disagreement, either party can open a dispute for resolution.',
@@ -67,7 +83,7 @@ const steps = [
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
     ),
