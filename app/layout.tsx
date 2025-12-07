@@ -1,14 +1,8 @@
 import "./globals.css";
 
-import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
-import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import Providers from "./providers";
 import type React from "react";
-import { SolanaWalletConnectors } from "@dynamic-labs/solana";
-import { ThemeProvider } from "@/components/theme-provider";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "SolEscrow - P2P Crypto Escrow",
