@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui-custom/button";
+import { MINT_MAP } from "@/lib/constants";
 import { ProgressStepper } from "@/components/ui-custom/progress-stepper";
 import { PublicKey } from "@solana/web3.js";
 import type React from "react";
@@ -19,12 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 type TradeType = "BUY" | "SELL";
 type Token = "SOL" | "USDC" | "USDT";
 type Fiat = "USD" | "EUR" | "ARS";
-
-const MINT_MAP: Record<Token, string> = {
-  SOL: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-  USDC: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-  USDT: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-};
 
 interface FormData {
   type: TradeType;

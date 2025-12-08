@@ -5,7 +5,7 @@ import Providers from "./providers";
 import type React from "react";
 
 export const metadata: Metadata = {
-  title: "SolEscrow - P2P Crypto Escrow",
+  title: "Salana P2P - P2P Crypto Escrow",
   description: "Secure peer-to-peer cryptocurrency escrow on Solana",
 };
 

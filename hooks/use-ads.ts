@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { Ad } from "@/lib/types";
 
@@ -15,7 +15,7 @@ export function useAds(options: UseAdsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAds = async () => {
+  const fetchAds = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -38,15 +38,22 @@ export function useAds(options: UseAdsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [options.type, options.token, options.fiat]);
 
+  // Initial load and filter changes
   useEffect(() => {
     fetchAds();
+  }, [fetchAds]);
 
-    const handleRefresh = () => fetchAds();
+  // Listen to refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log("refresh hooks");
+      fetchAds();
+    };
     window.addEventListener("p2p-refresh-ads", handleRefresh);
     return () => window.removeEventListener("p2p-refresh-ads", handleRefresh);
-  }, [options.type, options.token, options.fiat]);
+  }, [fetchAds]);
 
   return { data, loading, error, refetch: fetchAds };
 }

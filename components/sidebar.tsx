@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -9,8 +10,9 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
+  const { primaryWallet } = useDynamicContext();
 
-  const navItems = [
+  const allNavItems = [
     {
       href: "/",
       label: "Home",
@@ -28,6 +30,7 @@ export function Sidebar() {
     {
       href: "/dashboard",
       label: "Dashboard",
+      protected: true,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -42,6 +45,7 @@ export function Sidebar() {
     {
       href: "/profile",
       label: "Profile",
+      protected: true,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -70,6 +74,7 @@ export function Sidebar() {
     {
       href: "/create",
       label: "Create Ad",
+      protected: true,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -77,6 +82,9 @@ export function Sidebar() {
       ),
     },
   ];
+
+  // Filter nav items based on authentication
+  const navItems = allNavItems.filter((item) => !item.protected || primaryWallet);
 
   return (
     <>

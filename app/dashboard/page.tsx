@@ -11,6 +11,7 @@ import { SimpleHeader } from "@/components/simple-header";
 import { TableSkeleton } from "@/components/loading-skeleton";
 import { Tabs } from "@/components/ui-custom/tabs";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useRouter } from "next/navigation";
 
 function EscrowTable({
   ads,
@@ -151,7 +152,10 @@ export default function DashboardPage() {
     }
 
     const handleRefresh = () => {
-      if (primaryWallet) fetchAds();
+      if (primaryWallet) {
+        console.log("refresh");
+        fetchAds();
+      }
     };
     window.addEventListener("p2p-refresh-ads", handleRefresh);
     return () => window.removeEventListener("p2p-refresh-ads", handleRefresh);
@@ -188,11 +192,6 @@ export default function DashboardPage() {
 
   const tabs = [
     {
-      id: "all",
-      label: "All",
-      content: <EscrowTable ads={ads} showLoading={isLoading} onViewDetails={handleViewDetails} />,
-    },
-    {
       id: "active",
       label: "Active",
       content: (
@@ -205,6 +204,11 @@ export default function DashboardPage() {
       content: (
         <EscrowTable ads={completedAds} showLoading={isLoading} onViewDetails={handleViewDetails} />
       ),
+    },
+    {
+      id: "all",
+      label: "All",
+      content: <EscrowTable ads={ads} showLoading={isLoading} onViewDetails={handleViewDetails} />,
     },
   ];
 

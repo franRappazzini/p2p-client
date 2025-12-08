@@ -8,6 +8,7 @@ import { Avatar } from "./ui-custom/avatar";
 import { Badge } from "./ui-custom/badge";
 import { Button } from "./ui-custom/button";
 import Link from "next/link";
+import { MINT_MAP } from "@/lib/constants";
 import { Modal } from "./ui-custom/modal";
 import { PublicKey } from "@solana/web3.js";
 import { StatusStepper } from "./ui-custom/status-stepper";
@@ -24,15 +25,6 @@ interface AdDetailModalProps {
   showEscrowProgress?: boolean;
   onUpdate?: () => void;
 }
-
-const MINT_MAP: Record<string, string> = {
-  // SOL: "So11111111111111111111111111111111111111112",
-  // USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
-  // USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-  SOL: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-  USDC: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-  USDT: "Ho3o2gMHALU3Lam5mgE8xN4L7uXBLQ3S3WFPDDCHsyfe",
-};
 
 export function AdDetailModal({
   ad,

@@ -351,9 +351,11 @@ export default function HowItWorksPage() {
                   />
                 </svg>
               </div>
-              <span className="font-semibold text-foreground">SolEscrow</span>
+              <span className="font-semibold text-foreground">Salana P2P</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 SolEscrow. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Salana P2P. All rights reserved.
+            </p>
             <div className="flex gap-4">
               <a
                 href="#"

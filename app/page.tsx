@@ -5,6 +5,7 @@ import { AdDetailModal } from "@/components/ad-detail-modal";
 import { AdsTable } from "@/components/ads-table";
 import { Button } from "@/components/ui-custom/button";
 import { FiltersBar } from "@/components/filters-bar";
+import Image from "next/image";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("newest");
 
   const [filters, setFilters] = useState({
     type: "buy",
@@ -22,8 +24,34 @@ export default function HomePage() {
     fiat: "all",
   });
 
-  const { data: allAds, loading, error, refetch } = useAds(filters);
-  const ads = allAds.filter((ad) => ad.status === "active");
+  const {
+    data: allAds,
+    loading,
+    error,
+    refetch,
+  } = useAds({
+    type: filters.type !== "all" ? filters.type : undefined,
+    token: filters.token !== "all" ? filters.token : undefined,
+    fiat: filters.fiat !== "all" ? filters.fiat : undefined,
+  });
+
+  const activeAds = allAds.filter((ad) => ad.status === "active");
+
+  // Sort ads based on selected option
+  const ads = [...activeAds].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return b.createdAt - a.createdAt;
+      case "lowest-price":
+        return a.pricePerToken - b.pricePerToken;
+      case "highest-amount":
+        return b.tokenAmount - a.tokenAmount;
+      case "ending-soon":
+        return (a.expiresAt || 0) - (b.expiresAt || 0);
+      default:
+        return 0;
+    }
+  });
 
   const handleRefresh = async () => {
     setIsRefetching(true);
@@ -78,11 +106,15 @@ export default function HomePage() {
             <Link href="/create">
               <Button>Create Ad</Button>
             </Link>
-            <select className="text-sm border border-border rounded-lg px-3 py-2 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-              <option>Newest First</option>
-              <option>Lowest Price</option>
-              <option>Highest Amount</option>
-              <option>Ending Soon</option>
+            <select
+              className="text-sm border border-border rounded-lg px-3 py-2 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="newest">Newest First</option>
+              <option value="lowest-price">Lowest Price</option>
+              <option value="highest-amount">Highest Amount</option>
+              <option value="ending-soon">Ending Soon</option>
             </select>
           </div>
         </div>
@@ -161,25 +193,13 @@ export default function HomePage() {
       <footer className="border-t border-border mt-16 md:ml-16">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-primary-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <span className="font-semibold text-foreground">SolEscrow</span>
+            <div className="flex items-center">
+              <Image src="/salana.png" alt="Salana P2P Logo" width={40} height={40} />
+              <span className="font-semibold text-foreground">Salana P2P</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 SolEscrow. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Salana P2P. All rights reserved.
+            </p>
             <div className="flex gap-4">
               <a
                 href="#"

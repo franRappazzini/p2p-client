@@ -14,6 +14,7 @@ import { StatCard } from "@/components/ui-custom/stat-card";
 import { Tabs } from "@/components/ui-custom/tabs";
 import { formatDistanceToNow } from "date-fns";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 function StarRating({ rating }: { rating: number }) {
@@ -37,6 +38,7 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ProfilePage() {
   const { primaryWallet } = useDynamicContext();
+  const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [reviews, setReviews] = useState<Rating[]>([]);
@@ -50,6 +52,8 @@ export default function ProfilePage() {
     telegramUsername: "",
     avatar: "",
   });
+
+
 
   useEffect(() => {
     if (primaryWallet?.address) {
