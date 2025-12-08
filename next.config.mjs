@@ -6,7 +6,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  turbopack: {},
   serverExternalPackages: ["pino", "thread-stream"],
 };
 
