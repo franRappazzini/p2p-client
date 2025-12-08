@@ -17,11 +17,8 @@ Plataforma de intercambio P2P construida con Next.js, Solana y PostgreSQL.
 
 2. **Configurar variables de entorno:**
 
-   - Vercel automáticamente agregará `POSTGRES_URL` y otras variables a tu proyecto
-   - Asegúrate de agregar también `PRISMA_DATABASE_URL` manualmente:
-     - Ve a **Settings** → **Environment Variables**
-     - Agrega `PRISMA_DATABASE_URL` con el valor de `POSTGRES_URL` + parámetros de pooling:
-     - Valor: `[TU_POSTGRES_URL]?connection_limit=1&pool_timeout=0`
+   - Vercel automáticamente agregará `POSTGRES_URL` cuando conectes Vercel Postgres
+   - No necesitas agregar variables adicionales, el proyecto usa `POSTGRES_URL` automáticamente
 
 3. **Deploy:**
    - Haz push a tu repositorio
@@ -36,7 +33,7 @@ Plataforma de intercambio P2P construida con Next.js, Solana y PostgreSQL.
 2. **Actualizar `.env.local` con tu URL de base de datos:**
 
    ```env
-   PRISMA_DATABASE_URL="postgresql://user:password@localhost:5432/p2p_dev?connection_limit=1&pool_timeout=0"
+   PRISMA_DATABASE_URL="postgresql://user:password@localhost:5432/p2p_dev"
    ```
 
 3. **Ejecutar migraciones:**

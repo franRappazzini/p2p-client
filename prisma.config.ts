@@ -10,7 +10,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // Usar PRISMA_DATABASE_URL con fallback a POSTGRES_URL (para Vercel)
-    url: env("PRISMA_DATABASE_URL") || env("POSTGRES_URL"),
+    url: env("POSTGRES_URL") || env("PRISMA_DATABASE_URL"),
   },
 });
