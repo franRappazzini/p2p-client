@@ -1,21 +1,32 @@
+import { safeResponse, toClientUser } from "@/lib/adapters";
+
 import { NextResponse } from "next/server";
-import { User } from "@/lib/types";
-import { db } from "@/lib/db";
+import { handlePrismaError } from "@/lib/prisma-errors";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const wallet = searchParams.get("wallet");
+  try {
+    const { searchParams } = new URL(request.url);
+    const wallet = searchParams.get("wallet");
 
-  if (wallet) {
-    const user = db.users.getByWallet(wallet);
-    if (user) {
-      return NextResponse.json(user);
+    if (wallet) {
+      const user = await prisma.user.findUnique({
+        where: { walletAddress: wallet },
+      });
+
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      return NextResponse.json(safeResponse(user, toClientUser));
     }
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
 
-  const users = db.users.getAll();
-  return NextResponse.json(users);
+    const users = await prisma.user.findMany();
+    return NextResponse.json(safeResponse(users, toClientUser));
+  } catch (error) {
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
+  }
 }
 
 export async function POST(request: Request) {
@@ -26,25 +37,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing walletAddress" }, { status: 400 });
     }
 
-    const newUser: User = {
-      walletAddress: body.walletAddress,
-      username: body.username || `User ${body.walletAddress.slice(0, 6)}`,
-      telegramUsername: body.telegramUsername || "",
-      avatar: body.avatar || "",
-      createdAt: Date.now(),
-      positiveRatings: 0,
-      negativeRatings: 0,
-      completedTrades: 0,
-      reputation: 0,
-      ratingSum: 0,
-      ratingCount: 0,
-    };
+    // Usar upsert para prevenir duplicados y retornar el usuario existente si ya existe
+    const user = await prisma.user.upsert({
+      where: { walletAddress: body.walletAddress },
+      update: {}, // No actualizar nada si ya existe
+      create: {
+        walletAddress: body.walletAddress,
+        username: body.username || `User ${body.walletAddress.slice(0, 6)}`,
+        telegramUsername: body.telegramUsername || undefined,
+        avatar: body.avatar || undefined,
+      },
+    });
 
-    const createdUser = db.users.create(newUser);
-    return NextResponse.json(createdUser);
+    return NextResponse.json(safeResponse(user, toClientUser));
   } catch (error) {
-    console.error("Error creating user:", error);
-    return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -57,15 +65,18 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Missing walletAddress" }, { status: 400 });
     }
 
-    const updatedUser = db.users.update(walletAddress, updates);
+    const updatedUser = await prisma.user.update({
+      where: { walletAddress },
+      data: {
+        username: updates.username,
+        telegramUsername: updates.telegramUsername || undefined,
+        avatar: updates.avatar || undefined,
+      },
+    });
 
-    if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(updatedUser);
+    return NextResponse.json(safeResponse(updatedUser, toClientUser));
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }

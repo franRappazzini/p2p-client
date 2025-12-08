@@ -1,19 +1,26 @@
+import { safeResponse, toClientAd } from "@/lib/adapters";
+
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { handlePrismaError } from "@/lib/prisma-errors";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const ad = db.ads.getById(id);
+    const ad = await prisma.ad.findUnique({
+      where: { id },
+      // Opción futura: incluir relaciones para optimizar
+      // include: { creator: true, taker: true }
+    });
 
     if (!ad) {
       return NextResponse.json({ error: "Ad not found" }, { status: 404 });
     }
 
-    return NextResponse.json(ad);
+    return NextResponse.json(safeResponse(ad, toClientAd));
   } catch (error) {
-    console.error("Error fetching ad:", error);
-    return NextResponse.json({ error: "Failed to fetch ad" }, { status: 500 });
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -22,55 +29,85 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await request.json();
 
-    // Check if completing trade to update user stats
+    // Si el status cambia a "completed", usar transacción para actualizar ad y users atómicamente
     if (body.status === "completed") {
-      const currentAd = db.ads.getById(id);
-      if (currentAd) {
-        // Update Creator
-        const creator = db.users.getByWallet(currentAd.creatorWallet);
-        if (creator) {
-          db.users.update(creator.walletAddress, {
-            completedTrades: (creator.completedTrades || 0) + 1,
-          });
-        }
+      const currentAd = await prisma.ad.findUnique({ where: { id } });
 
-        // Update Taker
-        if (currentAd.takenBy) {
-          const taker = db.users.getByWallet(currentAd.takenBy);
-          if (taker) {
-            db.users.update(taker.walletAddress, {
-              completedTrades: (taker.completedTrades || 0) + 1,
-            });
-          }
-        }
+      if (!currentAd) {
+        return NextResponse.json({ error: "Ad not found" }, { status: 404 });
       }
+
+      // Preparar updates de datos del ad
+      const adUpdateData: any = {
+        status: "COMPLETED",
+      };
+
+      // Agregar otros campos si vienen en el body
+      if (body.escrowId !== undefined) adUpdateData.escrowId = body.escrowId;
+      if (body.takenBy !== undefined) adUpdateData.takenBy = body.takenBy;
+      if (body.creationSignature !== undefined)
+        adUpdateData.creationSignature = body.creationSignature;
+      if (body.paidSignature !== undefined) adUpdateData.paidSignature = body.paidSignature;
+      if (body.releaseSignature !== undefined)
+        adUpdateData.releaseSignature = body.releaseSignature;
+
+      // Transacción: actualizar ad + incrementar completedTrades de creator y taker
+      const [updatedAd] = await prisma.$transaction([
+        prisma.ad.update({
+          where: { id },
+          data: adUpdateData,
+        }),
+        prisma.user.update({
+          where: { walletAddress: currentAd.creatorWallet },
+          data: { completedTrades: { increment: 1 } },
+        }),
+        ...(currentAd.takenBy
+          ? [
+              prisma.user.update({
+                where: { walletAddress: currentAd.takenBy },
+                data: { completedTrades: { increment: 1 } },
+              }),
+            ]
+          : []),
+      ]);
+
+      return NextResponse.json(safeResponse(updatedAd, toClientAd));
     }
 
-    const updatedAd = db.ads.update(id, body);
+    // Para otros updates (no completed), actualizar solo el ad
+    const updateData: any = {};
 
-    if (!updatedAd) {
-      return NextResponse.json({ error: "Ad not found" }, { status: 404 });
+    if (body.status !== undefined) {
+      updateData.status = body.status.toUpperCase().replace(/_/g, "_");
     }
+    if (body.escrowId !== undefined) updateData.escrowId = body.escrowId;
+    if (body.takenBy !== undefined) updateData.takenBy = body.takenBy;
+    if (body.creationSignature !== undefined) updateData.creationSignature = body.creationSignature;
+    if (body.paidSignature !== undefined) updateData.paidSignature = body.paidSignature;
+    if (body.releaseSignature !== undefined) updateData.releaseSignature = body.releaseSignature;
 
-    return NextResponse.json(updatedAd);
+    const updatedAd = await prisma.ad.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json(safeResponse(updatedAd, toClientAd));
   } catch (error) {
-    console.error("Error updating ad:", error);
-    return NextResponse.json({ error: "Failed to update ad" }, { status: 400 });
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const success = db.ads.delete(id);
-
-    if (!success) {
-      return NextResponse.json({ error: "Ad not found" }, { status: 404 });
-    }
+    await prisma.ad.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting ad:", error);
-    return NextResponse.json({ error: "Failed to delete ad" }, { status: 400 });
+    const { status, message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }

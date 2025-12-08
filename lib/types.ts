@@ -43,3 +43,22 @@ export interface Ad {
   paidSignature?: string;
   releaseSignature?: string;
 }
+
+// Legacy type for announcement components (not actively used)
+export interface Announcement {
+  id: string;
+  seller: {
+    name: string;
+    avatar?: string;
+    completedTrades: number;
+    rating: number;
+  };
+  type: "buy" | "sell";
+  crypto: string;
+  amount: number;
+  fiat: string;
+  price: number;
+  total: number;
+  paymentMethods: string[];
+  terms?: string;
+}

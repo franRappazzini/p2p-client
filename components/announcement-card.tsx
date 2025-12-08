@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Badge } from "./ui-custom/badge"
-import { Button } from "./ui-custom/button"
-import { Avatar } from "./ui-custom/avatar"
-import type { Announcement } from "@/lib/mock-data"
+import type { Announcement } from "@/lib/types";
+import { Avatar } from "./ui-custom/avatar";
+import { Badge } from "./ui-custom/badge";
+import { Button } from "./ui-custom/button";
 
 interface AnnouncementCardProps {
-  announcement: Announcement
-  onClick?: () => void
+  announcement: Announcement;
+  onClick?: () => void;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -16,7 +16,9 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-3.5 h-3.5 ${star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"}`}
+          className={`w-3.5 h-3.5 ${
+            star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"
+          }`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -24,11 +26,21 @@ function StarRating({ rating }: { rating: number }) {
         </svg>
       ))}
     </div>
-  )
+  );
 }
 
 export function AnnouncementCard({ announcement, onClick }: AnnouncementCardProps) {
-  const { type, token, tokenAmount, fiat, fiatAmount, pricePerToken, paymentMethod, timeLeft, creator } = announcement
+  const {
+    type,
+    token,
+    tokenAmount,
+    fiat,
+    fiatAmount,
+    pricePerToken,
+    paymentMethod,
+    timeLeft,
+    creator,
+  } = announcement;
 
   return (
     <div className="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 group">
@@ -101,9 +113,14 @@ export function AnnouncementCard({ announcement, onClick }: AnnouncementCardProp
       </div>
 
       {/* Action */}
-      <Button variant="primary" size="sm" className="w-full group-hover:bg-primary/90" onClick={onClick}>
+      <Button
+        variant="primary"
+        size="sm"
+        className="w-full group-hover:bg-primary/90"
+        onClick={onClick}
+      >
         View Details
       </Button>
     </div>
-  )
+  );
 }

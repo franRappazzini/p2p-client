@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { Modal } from "./ui-custom/modal"
-import { Badge } from "./ui-custom/badge"
-import { Button } from "./ui-custom/button"
-import { Avatar } from "./ui-custom/avatar"
-import { StatusStepper } from "./ui-custom/status-stepper"
-import type { Announcement } from "@/lib/mock-data"
+import type { Announcement } from "@/lib/types";
+import { Avatar } from "./ui-custom/avatar";
+import { Badge } from "./ui-custom/badge";
+import { Button } from "./ui-custom/button";
+import { Modal } from "./ui-custom/modal";
+import { StatusStepper } from "./ui-custom/status-stepper";
 
 interface AnnouncementDetailModalProps {
-  announcement: Announcement | null
-  isOpen: boolean
-  onClose: () => void
-  showEscrowProgress?: boolean
+  announcement: Announcement | null;
+  isOpen: boolean;
+  onClose: () => void;
+  showEscrowProgress?: boolean;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -20,7 +20,9 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-4 h-4 ${star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"}`}
+          className={`w-4 h-4 ${
+            star <= Math.round(rating) ? "text-warning fill-warning" : "text-muted"
+          }`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -28,7 +30,7 @@ function StarRating({ rating }: { rating: number }) {
         </svg>
       ))}
     </div>
-  )
+  );
 }
 
 export function AnnouncementDetailModal({
@@ -37,13 +39,13 @@ export function AnnouncementDetailModal({
   onClose,
   showEscrowProgress = false,
 }: AnnouncementDetailModalProps) {
-  if (!announcement) return null
+  if (!announcement) return null;
 
   const escrowSteps = [
     { label: "Open", completed: true },
     { label: "Fiat Paid", completed: showEscrowProgress, current: showEscrowProgress },
     { label: "Completed", completed: false },
-  ]
+  ];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -104,10 +106,16 @@ export function AnnouncementDetailModal({
         {/* Creator Profile */}
         <div className="border border-border rounded-xl p-4 mb-6">
           <div className="flex items-center gap-4 mb-4">
-            <Avatar src={announcement.creator.avatar} alt={announcement.creator.username} size="lg" />
+            <Avatar
+              src={announcement.creator.avatar}
+              alt={announcement.creator.username}
+              size="lg"
+            />
             <div className="flex-1">
               <p className="font-semibold text-card-foreground">{announcement.creator.username}</p>
-              <p className="text-sm text-muted-foreground font-mono">{announcement.creator.wallet}</p>
+              <p className="text-sm text-muted-foreground font-mono">
+                {announcement.creator.wallet}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 mb-3">
@@ -118,15 +126,21 @@ export function AnnouncementDetailModal({
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-lg font-semibold text-card-foreground">{announcement.creator.completedTrades}</p>
+              <p className="text-lg font-semibold text-card-foreground">
+                {announcement.creator.completedTrades}
+              </p>
               <p className="text-xs text-muted-foreground">Completed</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-success">{announcement.creator.successRate}%</p>
+              <p className="text-lg font-semibold text-success">
+                {announcement.creator.successRate}%
+              </p>
               <p className="text-xs text-muted-foreground">Success Rate</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-card-foreground">{announcement.creator.memberSince}</p>
+              <p className="text-lg font-semibold text-card-foreground">
+                {announcement.creator.memberSince}
+              </p>
               <p className="text-xs text-muted-foreground">Member Since</p>
             </div>
           </div>
@@ -135,7 +149,9 @@ export function AnnouncementDetailModal({
         {/* Terms */}
         <div className="mb-6">
           <h4 className="text-sm font-medium text-card-foreground mb-2">Terms & Conditions</h4>
-          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">{announcement.terms}</div>
+          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+            {announcement.terms}
+          </div>
         </div>
 
         {/* Actions */}
@@ -170,5 +186,5 @@ export function AnnouncementDetailModal({
         </div>
       </div>
     </Modal>
-  )
+  );
 }

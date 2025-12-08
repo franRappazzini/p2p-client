@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums
+enum AdType {
+  BUY
+  SELL
+}
+
+enum AdStatus {
+  ACTIVE
+  TAKEN
+  ESCROW_CREATED
+  PAID
+  COMPLETED
+  CANCELLED
+}
+
+// Models
+model User {
+  walletAddress    String   @id
+  username         String
+  telegramUsername String?
+  avatar           String?
+  createdAt        DateTime @default(now())
+  
+  // Stats
+  positiveRatings  Int      @default(0)
+  negativeRatings  Int      @default(0)
+  completedTrades  Int      @default(0)
+  reputation       Float    @default(0)
+  ratingSum        Int      @default(0)
+  ratingCount      Int      @default(0)
+  
+  // Relations
+  createdAds       Ad[]     @relation("AdCreator")
+  takenAds         Ad[]     @relation("AdTaker")
+  ratingsGiven     Rating[] @relation("RatingFrom")
+  ratingsReceived  Rating[] @relation("RatingTo")
+}
+
+model Ad {
+  id                  String    @id @default(uuid())
+  creatorWallet       String
+  type                AdType
+  tokenMint           String
+  tokenAmount         Float
+  fiatCurrency        String
+  fiatAmount          Float
+  paymentMethod       String
+  pricePerToken       Float
+  terms               String
+  timeLimit           Int
+  status              AdStatus  @default(ACTIVE)
+  escrowId            Int?
+  takenBy             String?
+  createdAt           DateTime  @default(now())
+  expiresAt           DateTime
+  creationSignature   String?
+  paidSignature       String?
+  releaseSignature    String?
+  
+  // Relations
+  creator             User      @relation("AdCreator", fields: [creatorWallet], references: [walletAddress])
+  taker               User?     @relation("AdTaker", fields: [takenBy], references: [walletAddress])
+  ratings             Rating[]
+  
+  // Indexes
+  @@index([status, createdAt])
+  @@index([creatorWallet])
+  @@index([takenBy])
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  fromWallet String
+  toWallet   String
+  adId       String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  fromUser   User     @relation("RatingFrom", fields: [fromWallet], references: [walletAddress])
+  toUser     User     @relation("RatingTo", fields: [toWallet], references: [walletAddress])
+  ad         Ad       @relation(fields: [adId], references: [id])
+  
+  // Constraints
+  @@unique([fromWallet, adId])
+  @@index([toWallet])
+}
