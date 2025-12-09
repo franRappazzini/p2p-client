@@ -1,17 +1,26 @@
 import { PrismaClient } from "@prisma/client";
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
 };
 
 function createPrismaClient() {
-  const databaseUrl = process.env.POSTGRES_URL || process.env.PRISMA_DATABASE_URL;
+  const connectionString = process.env.POSTGRES_URL || process.env.PRISMA_DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error(
+      "Database connection string not found. Please set POSTGRES_URL or PRISMA_DATABASE_URL environment variable."
+    );
+  }
+
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
-    // log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    // En Prisma v7, la URL se pasa via accelerateUrl
-    // ...(databaseUrl && { accelerateUrl: databaseUrl }),
+    adapter,
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }
 
