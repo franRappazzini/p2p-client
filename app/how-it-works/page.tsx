@@ -111,7 +111,7 @@ const faqs = [
   {
     question: "How does the escrow protect me?",
     answer:
-      "The escrow smart contract holds the crypto securely until both parties fulfill their obligations. The seller cannot retrieve the funds once locked, and the buyer only receives them when the seller confirms payment receipt. This eliminates the risk of fraud.",
+      "The Salana P2P smart contract holds the crypto securely until both parties fulfill their obligations. The seller cannot retrieve the funds once locked, and the buyer only receives them when the seller confirms payment receipt. This eliminates the risk of fraud.",
   },
   {
     question: "What happens if the buyer doesn't pay?",
@@ -126,7 +126,7 @@ const faqs = [
   {
     question: "What tokens are supported?",
     answer:
-      "Currently we support SOL, USDC, and USDT on the Solana blockchain. We're continuously working to add more tokens based on community demand.",
+      "Currently we support wSOL, USDC, and USDT on the Solana blockchain. We're continuously working to add more tokens based on community demand.",
   },
   {
     question: "What payment methods can I use?",
@@ -136,7 +136,7 @@ const faqs = [
   {
     question: "Are there any fees?",
     answer:
-      "We charge a small fee (0.5%) on completed trades. This fee is split between both parties. There are no fees for creating announcements or for trades that don't complete.",
+      "We charge a small fee (0.5% per side) on completed trades. There are no fees for creating announcements or for trades that don't complete.",
   },
 ];
 
