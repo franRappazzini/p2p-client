@@ -4,3 +4,6 @@ dist/
 .next/
 test-ledger/
 /lib/generated/prisma
+
+# Prisma migrations (usamos db push en desarrollo, migraciones solo en producción)
+prisma/migrations/

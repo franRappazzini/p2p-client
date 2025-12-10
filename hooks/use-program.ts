@@ -18,10 +18,13 @@ export function useProgram() {
   const { primaryWallet, networkConfigurations } = useDynamicContext();
 
   const connection = useMemo(() => {
-    // HTTP endpoint for RPC calls, WebSocket endpoint for subscriptions/events
-    return new Connection("http://127.0.0.1:8899", {
+    // Usar variables de entorno para configurar RPC endpoints
+    const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "http://127.0.0.1:8899";
+    const wsUrl = process.env.NEXT_PUBLIC_SOLANA_WS_URL || "ws://127.0.0.1:8900";
+
+    return new Connection(rpcUrl, {
       commitment: "confirmed",
-      wsEndpoint: "ws://127.0.0.1:8900",
+      wsEndpoint: wsUrl,
     });
   }, []);
 
