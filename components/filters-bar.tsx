@@ -1,60 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface FiltersBarProps {
-  className?: string
+  className?: string;
   filters: {
-    type: string
-    token: string
-    fiat: string
-  }
-  onFiltersChange: (filters: { type: string; token: string; fiat: string }) => void
+    type: string;
+    token: string;
+    fiat: string;
+  };
+  onFiltersChange: (filters: { type: string; token: string; fiat: string }) => void;
 }
 
 export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarProps) {
-  const [tokenOpen, setTokenOpen] = useState(false)
-  const [fiatOpen, setFiatOpen] = useState(false)
+  const [tokenOpen, setTokenOpen] = useState(false);
+  const [fiatOpen, setFiatOpen] = useState(false);
 
   const tokenOptions = [
     { value: "all", label: "All Tokens" },
-    { value: "SOL", label: "SOL" },
+    { value: "wSOL", label: "wSOL" },
     { value: "USDC", label: "USDC" },
     { value: "USDT", label: "USDT" },
-  ]
+  ];
 
   const fiatOptions = [
     { value: "all", label: "All Fiats" },
     { value: "USD", label: "USD" },
     { value: "EUR", label: "EUR" },
     { value: "ARS", label: "ARS" },
-  ]
+  ];
 
   const setType = (type: string) => {
-    onFiltersChange({ ...filters, type })
-  }
+    onFiltersChange({ ...filters, type });
+  };
 
   const setToken = (token: string) => {
-    onFiltersChange({ ...filters, token })
-    setTokenOpen(false)
-  }
+    onFiltersChange({ ...filters, token });
+    setTokenOpen(false);
+  };
 
   const setFiat = (fiat: string) => {
-    onFiltersChange({ ...filters, fiat })
-    setFiatOpen(false)
-  }
+    onFiltersChange({ ...filters, fiat });
+    setFiatOpen(false);
+  };
 
   const clearFilters = () => {
-    onFiltersChange({ type: "buy", token: "all", fiat: "all" })
-  }
+    onFiltersChange({ type: "buy", token: "all", fiat: "all" });
+  };
 
   return (
     <div className={cn("bg-card border border-border rounded-xl p-4 shadow-sm", className)}>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         {/* Type Toggle - Buy/Sell only */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Type</label>
+          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            Type
+          </label>
           <div className="flex gap-2">
             <button
               onClick={() => setType("buy")}
@@ -62,7 +64,7 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
                 "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
                 filters.type === "buy"
                   ? "bg-success text-success-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               )}
             >
               Buy
@@ -73,7 +75,7 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
                 "px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
                 filters.type === "sell"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               )}
             >
               Sell
@@ -83,11 +85,13 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
 
         {/* Token Select Dropdown */}
         <div className="flex flex-col gap-2 flex-1 md:max-w-xs relative">
-          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Token</label>
+          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            Token
+          </label>
           <button
             onClick={() => {
-              setTokenOpen(!tokenOpen)
-              setFiatOpen(false)
+              setTokenOpen(!tokenOpen);
+              setFiatOpen(false);
             }}
             className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-all flex items-center justify-between"
           >
@@ -98,7 +102,12 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
           {tokenOpen && (
@@ -109,7 +118,9 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
                   onClick={() => setToken(opt.value)}
                   className={cn(
                     "w-full px-4 py-2 text-sm text-left hover:bg-muted transition-colors",
-                    filters.token === opt.value ? "bg-primary/10 text-primary font-medium" : "text-foreground",
+                    filters.token === opt.value
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-foreground"
                   )}
                 >
                   {opt.label}
@@ -121,11 +132,13 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
 
         {/* Fiat Select Dropdown */}
         <div className="flex flex-col gap-2 flex-1 md:max-w-xs relative">
-          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Fiat</label>
+          <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            Fiat
+          </label>
           <button
             onClick={() => {
-              setFiatOpen(!fiatOpen)
-              setTokenOpen(false)
+              setFiatOpen(!fiatOpen);
+              setTokenOpen(false);
             }}
             className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-all flex items-center justify-between"
           >
@@ -136,7 +149,12 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
           {fiatOpen && (
@@ -147,7 +165,9 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
                   onClick={() => setFiat(opt.value)}
                   className={cn(
                     "w-full px-4 py-2 text-sm text-left hover:bg-muted transition-colors",
-                    filters.fiat === opt.value ? "bg-primary/10 text-primary font-medium" : "text-foreground",
+                    filters.fiat === opt.value
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-foreground"
                   )}
                 >
                   {opt.label}
@@ -165,5 +185,5 @@ export function FiltersBar({ className, filters, onFiltersChange }: FiltersBarPr
         </button>
       </div>
     </div>
-  )
+  );
 }

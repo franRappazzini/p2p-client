@@ -54,7 +54,7 @@ export function AdDetailModal({
       const tokenAmount = ad.tokenAmount;
       const mintAddress = MINT_MAP[ad.tokenMint];
 
-      if (ad.tokenMint === "SOL") {
+      if (ad.tokenMint === "wSOL") {
         const balance = await connection.getBalance(userPubkey);
         const balanceInSol = balance / 1e9;
         return balanceInSol >= tokenAmount;
@@ -194,8 +194,8 @@ export function AdDetailModal({
     setIsLoading(true);
     try {
       const mint = MINT_MAP[ad.tokenMint] || MINT_MAP["USDC"];
-      // Convert amount to atomic units (assuming 6 decimals for USDC/USDT, 9 for SOL)
-      const decimals = ad.tokenMint === "SOL" ? 9 : 6;
+      // Convert amount to atomic units (assuming 6 decimals for USDC/USDT, 9 for wSOL)
+      const decimals = ad.tokenMint === "wSOL" ? 9 : 6;
       const amountAtomic = Math.floor(ad.tokenAmount * Math.pow(10, decimals));
 
       const { tx, escrowId } = await createEscrow(amountAtomic, ad.takenBy, mint);

@@ -64,13 +64,13 @@ async function main() {
 
   const now = new Date();
 
-  // Ad 1: BUY SOL - ACTIVE
+  // Ad 1: BUY wSOL - ACTIVE
   const ad1 = await prisma.ad.create({
     data: {
       creatorWallet: user1.walletAddress,
       type: "BUY",
-      tokenMint: "SOL",
-      tokenAmount: 5.0,
+      tokenMint: "wSOL",
+      tokenAmount: 5,
       fiatCurrency: "USD",
       fiatAmount: 1000.0,
       paymentMethod: "PayPal, Bank Transfer",
@@ -125,12 +125,12 @@ async function main() {
   });
   console.log(`✓ Ad creado: ${ad3.type} ${ad3.tokenAmount} ${ad3.tokenMint} - ${ad3.status}`);
 
-  // Ad 4: SELL SOL - ESCROW_CREATED
+  // Ad 4: SELL wSOL - ESCROW_CREATED
   const ad4 = await prisma.ad.create({
     data: {
       creatorWallet: user2.walletAddress,
       type: "SELL",
-      tokenMint: "SOL",
+      tokenMint: "wSOL",
       tokenAmount: 10.0,
       fiatCurrency: "USD",
       fiatAmount: 2050.0,
@@ -172,12 +172,12 @@ async function main() {
   });
   console.log(`✓ Ad creado: ${ad5.type} ${ad5.tokenAmount} ${ad5.tokenMint} - ${ad5.status}`);
 
-  // Ad 6: BUY SOL - COMPLETED
+  // Ad 6: BUY wSOL - COMPLETED
   const ad6 = await prisma.ad.create({
     data: {
       creatorWallet: user3.walletAddress,
       type: "BUY",
-      tokenMint: "SOL",
+      tokenMint: "wSOL",
       tokenAmount: 20.0,
       fiatCurrency: "USD",
       fiatAmount: 4000.0,

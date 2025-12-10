@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 type TradeType = "BUY" | "SELL";
-type Token = "SOL" | "USDC" | "USDT";
+type Token = "wSOL" | "USDC" | "USDT";
 type Fiat = "USD" | "EUR" | "ARS";
 
 interface FormData {
@@ -32,7 +32,7 @@ interface FormData {
 }
 
 const tokenIcons: Record<Token, React.ReactNode> = {
-  SOL: (
+  wSOL: (
     <svg className="w-5 h-5" viewBox="0 0 397.7 311.7" fill="currentColor">
       <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 237.9z" />
       <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7z" />
@@ -110,7 +110,7 @@ export default function CreateAdPage() {
       const tokenAmount = parseFloat(formData.tokenAmount);
       const mintAddress = MINT_MAP[formData.token];
 
-      if (formData.token === "SOL") {
+      if (formData.token === "wSOL") {
         const balance = await connection.getBalance(userPubkey);
         const balanceInSol = balance / 1e9;
         return balanceInSol >= tokenAmount;
@@ -288,13 +288,10 @@ export default function CreateAdPage() {
                     onChange={(e) => updateField("token", e.target.value as Token)}
                     className="w-full px-4 py-3 pr-10 border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
                   >
-                    <option value="SOL">SOL - Solana</option>
+                    <option value="wSOL">wSOL - Wrapped Solana</option>
                     <option value="USDC">USDC - USD Coin</option>
                     <option value="USDT">USDT - Tether</option>
                   </select>
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-60">
-                    {tokenIcons[formData.token]}
-                  </div>
                   <svg
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
                     fill="none"
