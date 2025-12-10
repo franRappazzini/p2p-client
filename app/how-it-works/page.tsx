@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui-custom/button";
+import Image from "next/image";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
@@ -10,16 +11,16 @@ import { useState } from "react";
 const steps = [
   {
     number: 1,
-    title: "Create or Take an Announcement",
+    title: "Create or Find an Ad",
     description:
-      "Browse existing announcements or create your own. Specify the token, amount, fiat currency, payment method, and terms.",
+      "Browse existing ads or create your own. Specify the token, amount, fiat currency, payment method, and terms.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
         />
       </svg>
     ),
@@ -28,7 +29,7 @@ const steps = [
     number: 2,
     title: "Contact via Telegram",
     description:
-      "Before taking an ad, you must contact the counterparty on Telegram to coordinate the trade details and ensure both parties are online.",
+      "If you found an ad you want to take, first contact the counterparty on Telegram to verify they are online and coordinate where the fiat will be transferred.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -42,9 +43,25 @@ const steps = [
   },
   {
     number: 3,
-    title: "Funds Locked in Smart Contract",
+    title: "Take the Ad",
     description:
-      'When a trade is initiated, the seller{"\'"}s crypto is automatically locked in a secure Solana smart contract. Neither party can access the funds until conditions are met.',
+      "Once the details are coordinated, take the ad on the platform. This initiates the exchange process and notifies both parties that the transaction is active.",
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+        />
+      </svg>
+    ),
+  },
+  {
+    number: 4,
+    title: "Deposit the Tokens",
+    description:
+      "The seller deposits the tokens into the Solana smart contract. The funds are securely locked until the exchange conditions are met.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -57,10 +74,10 @@ const steps = [
     ),
   },
   {
-    number: 4,
-    title: "Complete Fiat Payment Off-chain",
+    number: 5,
+    title: "Send Fiat Off-Chain",
     description:
-      "The buyer sends fiat payment through the agreed payment method (bank transfer, PayPal, etc.). Both parties communicate to confirm the payment.",
+      "The buyer sends the fiat payment through the agreed method (bank transfer, PayPal, etc.). Both parties communicate to confirm the payment.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -73,10 +90,10 @@ const steps = [
     ),
   },
   {
-    number: 5,
-    title: "Release Crypto or Dispute",
+    number: 6,
+    title: "Release the Tokens",
     description:
-      'Once payment is confirmed, the seller releases the crypto to the buyer. If there{"\'"}s a disagreement, either party can open a dispute for resolution.',
+      "Once payment is confirmed, the seller releases the tokens from the smart contract. The funds are automatically transferred to the buyer securely.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -172,11 +189,11 @@ export default function HowItWorksPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="md:ml-16 container mx-auto px-4 py-16 md:py-24 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 text-balance">
-              How P2P Escrow Works
+              How Salana P2P Works
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground text-pretty">
               Secure, trustless cryptocurrency trading powered by Solana smart contracts. Trade with
@@ -194,11 +211,11 @@ export default function HowItWorksPage() {
               <div key={step.number} className="flex gap-6 md:gap-8">
                 {/* Step Number & Line */}
                 <div className="flex flex-col items-center">
-                  <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
                     {step.icon}
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-gradient-to-b from-primary to-border mt-4" />
+                    <div className="w-0.5 flex-1 bg-linear-to-b from-primary to-border mt-4" />
                   )}
                 </div>
 
@@ -223,7 +240,7 @@ export default function HowItWorksPage() {
         <div className="md:ml-16 container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
-              Why Choose Our Escrow?
+              Why Choose Salana P2P?
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-card border border-border rounded-xl p-6 text-center">
@@ -335,22 +352,8 @@ export default function HowItWorksPage() {
       <footer className="border-t border-border md:ml-16">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-primary-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
+            <div className="flex items-center">
+              <Image src="/salana.png" alt="Salana P2P Logo" width={40} height={40} />
               <span className="font-semibold text-foreground">Salana P2P</span>
             </div>
             <p className="text-sm text-muted-foreground">

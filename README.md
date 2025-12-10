@@ -1,105 +1,105 @@
 # P2P Trading Platform
 
-Plataforma de intercambio P2P construida con Next.js, Solana y PostgreSQL.
+P2P exchange platform built with Next.js, Solana, and PostgreSQL.
 
 ## Database Setup
 
 ### Vercel Postgres (Production)
 
-1. **Crear base de datos en Vercel:**
+1. **Create database on Vercel:**
 
-   - Ve al [Vercel Dashboard](https://vercel.com/dashboard)
-   - Selecciona tu proyecto
-   - Ve a la pestaña **Storage**
-   - Click en **Create Database**
-   - Selecciona **Postgres**
-   - Sigue los pasos para crear tu base de datos
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Select your project
+   - Go to the **Storage** tab
+   - Click on **Create Database**
+   - Select **Postgres**
+   - Follow the steps to create your database
 
-2. **Configurar variables de entorno:**
+2. **Configure environment variables:**
 
-   - Vercel automáticamente agregará `POSTGRES_URL` cuando conectes Vercel Postgres
-   - No necesitas agregar variables adicionales, el proyecto usa `POSTGRES_URL` automáticamente
+   - Vercel will automatically add `POSTGRES_URL` when you connect Vercel Postgres
+   - You don't need to add additional variables, the project uses `POSTGRES_URL` automatically
 
 3. **Deploy:**
-   - Haz push a tu repositorio
-   - Vercel automáticamente ejecutará las migraciones durante el build gracias al script `vercel-build`
+   - Push to your repository
+   - Vercel will automatically run migrations during build thanks to the `vercel-build` script
 
 ### Local Development
 
-1. **Configurar variables de entorno:**
+1. **Configure environment variables:**
    ```bash
    cp .env.example .env.local
    ```
-2. **Actualizar `.env.local` con tu URL de base de datos:**
+2. **Update `.env.local` with your database URL:**
 
    ```env
    PRISMA_DATABASE_URL="postgresql://user:password@localhost:5432/p2p_dev"
    ```
 
-3. **Ejecutar migraciones:**
+3. **Run migrations:**
 
    ```bash
    npx prisma migrate dev --name init
    ```
 
-4. **Generar cliente de Prisma:**
+4. **Generate Prisma client:**
 
    ```bash
    npx prisma generate
    ```
 
-5. **Seed de datos de prueba (opcional):**
+5. **Seed test data (optional):**
    ```bash
    bun run db:seed
    ```
 
-### Comandos Útiles
+### Useful Commands
 
-- **Explorar base de datos con Prisma Studio:**
+- **Explore database with Prisma Studio:**
 
   ```bash
   bun run db:studio
   ```
 
-- **Crear nueva migración:**
+- **Create new migration:**
 
   ```bash
-  npx prisma migrate dev --name nombre_de_migracion
+  npx prisma migrate dev --name migration_name
   ```
 
-- **Aplicar migraciones en producción:**
+- **Apply migrations in production:**
 
   ```bash
   npx prisma migrate deploy
   ```
 
-- **Reset de base de datos (⚠️ elimina todos los datos):**
+- **Reset database (⚠️ deletes all data):**
 
   ```bash
   npx prisma migrate reset
   ```
 
-- **Ver schema actual:**
+- **View current schema:**
   ```bash
   npx prisma db pull
   ```
 
 ### Backup Strategy
 
-Para el tier gratuito de Vercel Postgres, los backups automáticos no están incluidos. Recomendamos exportar datos periódicamente:
+For Vercel Postgres free tier, automatic backups are not included. We recommend exporting data periodically:
 
 ```bash
-# Exportar base de datos
+# Export database
 pg_dump $PRISMA_DATABASE_URL > backup-$(date +%Y%m%d).sql
 
-# Restaurar desde backup
+# Restore from backup
 psql $PRISMA_DATABASE_URL < backup-YYYYMMDD.sql
 ```
 
-Para backups automatizados, considera usar servicios como:
+For automated backups, consider using services like:
 
-- Vercel Postgres Pro (incluye backups automáticos)
-- Servicios externos como Neon, Supabase, o Railway
+- Vercel Postgres Pro (includes automatic backups)
+- External services like Neon, Supabase, or Railway
 
 ## Development
 
@@ -120,7 +120,7 @@ bun run start
 ## Tech Stack
 
 - **Frontend:** Next.js 16, React 19, TailwindCSS
-- **Database:** PostgreSQL con Prisma ORM
+- **Database:** PostgreSQL with Prisma ORM
 - **Blockchain:** Solana, Anchor Framework
 - **Wallet:** Dynamic Labs
 - **Deployment:** Vercel

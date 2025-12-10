@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,8 +53,6 @@ export default function ProfilePage() {
     telegramUsername: "",
     avatar: "",
   });
-
-
 
   useEffect(() => {
     if (primaryWallet?.address) {
@@ -142,12 +141,15 @@ export default function ProfilePage() {
     if (!primaryWallet?.address) return;
 
     try {
+      setIsSaving(true);
       const res = await fetch("/api/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           walletAddress: primaryWallet.address,
-          ...formData,
+          username: formData.username,
+          telegramUsername: formData.telegramUsername,
+          avatar: formData.avatar,
         }),
       });
 
@@ -160,7 +162,12 @@ export default function ProfilePage() {
           description: "Your profile has been updated successfully.",
         });
       } else {
-        throw new Error("Failed to update");
+        const errorData = await res.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error(error);
@@ -169,6 +176,8 @@ export default function ProfilePage() {
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -398,8 +407,8 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="flex gap-2 justify-center md:justify-start">
-                    <Button variant="primary" size="sm" onClick={handleSave}>
-                      Save Changes
+                    <Button variant="primary" size="sm" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
                       Cancel
