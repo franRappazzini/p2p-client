@@ -1,6 +1,30 @@
-# P2P Trading Platform
+# Salana P2P - Client
 
 P2P exchange platform built with Next.js, Solana, and PostgreSQL.
+
+**Program Repository**: [https://github.com/franRappazzini/p2p/tree/winter-hackathon](https://github.com/franRappazzini/p2p/tree/winter-hackathon)
+
+# How Solana Powers the Core of Our Project
+
+Solana is not just a blockchain choice for our P2P exchange platform—it's the fundamental enabler that makes decentralized fiat-to-crypto trading actually viable and competitive with centralized solutions.
+
+## Speed Enables Real-Time Trading
+
+P2P exchanges require immediate transaction finality. When a buyer confirms fiat payment, the crypto needs to be released from escrow instantly. Solana's 400ms block times and sub-second finality make this possible. Users experience the responsiveness they expect from modern financial applications, with transactions confirming almost immediately. This speed is crucial for building trust in the P2P exchange process, where any delay creates uncertainty and friction.
+
+## Low Fees Make Micro-Transactions Feasible
+
+Our platform targets global adoption, including users in emerging markets who may trade small amounts. With transaction costs averaging $0.00025, Solana makes every trade economically viable regardless of size. Whether someone is trading $10 or $10,000, the fees remain negligible. This truly democratizes access to cryptocurrency, ensuring that cost is never a barrier to entry for anyone, anywhere in the world.
+
+## Program Architecture for Trustless Escrow
+
+Our smart contract leverages Solana's account model and Program Derived Addresses (PDAs) to create secure, trustless escrow mechanics. When an order is created, funds are locked in a PDA controlled by our program logic—neither party can access them unilaterally. The escrow automatically releases crypto to the buyer only when conditions are met, or returns it to the seller if the trade is cancelled. This eliminates counterparty risk without requiring a trusted third party, making peer-to-peer trading truly safe and decentralized.
+
+## Scalability for Global Adoption
+
+Solana's capacity to handle 65,000+ transactions per second means our platform can scale globally without congestion or degraded performance. As trading volume grows, the network maintains consistent speed and costs. This scalability is critical for a P2P platform where thousands of users might be creating orders, updating escrows, and completing trades simultaneously across different regions and time zones.
+
+**In summary:** Solana's combination of speed, cost-efficiency, and robust programming capabilities makes decentralized P2P fiat-crypto exchange not just possible, but practical and scalable. The network provides the infrastructure needed to deliver a smooth, affordable, and trustless experience that can serve users globally without compromise.
 
 ## Database Setup
 
