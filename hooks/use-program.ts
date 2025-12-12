@@ -1,10 +1,20 @@
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
   TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
+  createSyncNativeInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { AnchorProvider, BN, Idl, Program } from "@coral-xyz/anchor";
-import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 
 import { P2p } from "@/app/lib/types/p2p";
 import idl from "@/lib/idl/p2p.json";
@@ -205,6 +215,122 @@ export function useProgram() {
       .rpc();
   };
 
+  const wrapSol = async (amount: number) => {
+    if (!provider || !connection) throw new Error("Wallet not connected");
+
+    const lamports = Math.floor(amount * LAMPORTS_PER_SOL);
+    const wsolAta = getAssociatedTokenAddressSync(NATIVE_MINT, provider.publicKey);
+
+    // Check if wSOL ATA exists
+    const accountInfo = await connection.getAccountInfo(wsolAta);
+    const transaction = new Transaction();
+
+    // Create ATA if it doesn't exist
+    if (!accountInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          provider.publicKey,
+          wsolAta,
+          provider.publicKey,
+          NATIVE_MINT
+        )
+      );
+    }
+
+    // Transfer SOL to wSOL ATA
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: provider.publicKey,
+        toPubkey: wsolAta,
+        lamports,
+      })
+    );
+
+    // Sync native to update balance
+    transaction.add(createSyncNativeInstruction(wsolAta));
+
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = provider.publicKey;
+
+    const signer = await provider.wallet.signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(signer.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+
+    // Poll for confirmation with a shorter timeout
+    const maxAttempts = 30;
+    const pollInterval = 500; // 500ms
+
+    for (let i = 0; i < maxAttempts; i++) {
+      const status = await connection.getSignatureStatus(signature);
+
+      if (status?.value?.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+      }
+
+      if (
+        status?.value?.confirmationStatus === "confirmed" ||
+        status?.value?.confirmationStatus === "finalized"
+      ) {
+        return signature;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    throw new Error("Transaction confirmation timeout");
+  };
+
+  const unwrapSol = async () => {
+    if (!provider || !connection) throw new Error("Wallet not connected");
+
+    const wsolAta = getAssociatedTokenAddressSync(NATIVE_MINT, provider.publicKey);
+
+    // Check if account exists
+    const accountInfo = await connection.getAccountInfo(wsolAta);
+    if (!accountInfo) throw new Error("No wSOL account found");
+
+    const transaction = new Transaction();
+
+    // Close the account to unwrap all wSOL
+    transaction.add(createCloseAccountInstruction(wsolAta, provider.publicKey, provider.publicKey));
+
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = provider.publicKey;
+
+    const signer = await provider.wallet.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(signer.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+
+    // Poll for confirmation with a shorter timeout
+    const maxAttempts = 30;
+    const pollInterval = 500; // 500ms
+
+    for (let i = 0; i < maxAttempts; i++) {
+      const status = await connection.getSignatureStatus(signature);
+
+      if (status?.value?.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+      }
+
+      if (
+        status?.value?.confirmationStatus === "confirmed" ||
+        status?.value?.confirmationStatus === "finalized"
+      ) {
+        return signature;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    throw new Error("Transaction confirmation timeout");
+  };
+
   return {
     program,
     provider,
@@ -212,5 +338,7 @@ export function useProgram() {
     createEscrow,
     markAsPaid,
     releaseTokens,
+    wrapSol,
+    unwrapSol,
   };
 }

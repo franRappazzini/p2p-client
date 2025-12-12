@@ -7,11 +7,13 @@ import { AddressDisplay } from "./ui-custom/address-display";
 import { Avatar } from "./ui-custom/avatar";
 import { Badge } from "./ui-custom/badge";
 import { Button } from "./ui-custom/button";
+import { FeeInfo } from "./fee-info";
 import Link from "next/link";
 import { MINT_MAP } from "@/lib/constants";
 import { Modal } from "./ui-custom/modal";
 import { PublicKey } from "@solana/web3.js";
 import { StatusStepper } from "./ui-custom/status-stepper";
+import { calculatePlatformFee } from "@/lib/utils";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useProgram } from "@/hooks/use-program";
@@ -364,6 +366,28 @@ export function AdDetailModal({
           <h2 className="text-3xl font-bold text-card-foreground mb-2">
             {ad.tokenAmount} {ad.tokenMint}
           </h2>
+          <p className="text-base text-muted-foreground mb-1 flex items-center">
+            {/* Show fee from the perspective of the current user's role */}
+            {/* If user is creator of a SELL ad OR taker of a BUY ad -> they are the SELLER (deposit +0.5%) */}
+            {/* If user is creator of a BUY ad OR taker of a SELL ad -> they are the BUYER (receive -0.5%) */}
+            {(isCreator && ad.type === "sell") || (isTaker && ad.type === "buy") ? (
+              <>
+                Total deposit:{" "}
+                <span className="font-medium text-foreground ml-1">
+                  {calculatePlatformFee(ad.tokenAmount).amountWithFee.toFixed(2)} {ad.tokenMint}
+                </span>
+                <FeeInfo amount={ad.tokenAmount} token={ad.tokenMint} role="seller" />
+              </>
+            ) : (
+              <>
+                You will receive:{" "}
+                <span className="font-medium text-foreground ml-1">
+                  {calculatePlatformFee(ad.tokenAmount).amountAfterFee.toFixed(2)} {ad.tokenMint}
+                </span>
+                <FeeInfo amount={ad.tokenAmount} token={ad.tokenMint} role="buyer" />
+              </>
+            )}
+          </p>
           <p className="text-xl text-muted-foreground mb-3">
             → {ad.fiatAmount} {ad.fiatCurrency}
           </p>

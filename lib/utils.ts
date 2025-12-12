@@ -49,3 +49,20 @@ export function validateTelegramUsername(username: string): {
 
   return { valid: true, sanitized };
 }
+
+// Platform fee configuration
+export const PLATFORM_FEE_BPS = 50; // 0.5% = 50 basis points
+
+export function calculatePlatformFee(amount: number) {
+  const fee = (amount * PLATFORM_FEE_BPS) / 10000;
+  const amountWithFee = amount + fee;
+  const amountAfterFee = amount - fee;
+  const percentage = "0.5%";
+
+  return {
+    fee,
+    amountWithFee,
+    amountAfterFee,
+    percentage,
+  };
+}

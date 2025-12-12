@@ -1,8 +1,10 @@
 "use client";
 
+import { calculatePlatformFee, cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui-custom/button";
+import { FeeInfo } from "@/components/fee-info";
 import { MINT_MAP } from "@/lib/constants";
 import { ProgressStepper } from "@/components/ui-custom/progress-stepper";
 import { PublicKey } from "@solana/web3.js";
@@ -10,7 +12,6 @@ import type React from "react";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/simple-header";
 import type { User } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useProgram } from "@/hooks/use-program";
@@ -384,6 +385,22 @@ export default function CreateAdPage() {
                   <p className="text-xs text-muted-foreground mt-1">
                     {formData.tokenAmount} {formData.token} × ${formData.pricePerUnit}
                   </p>
+                  {formData.type === "SELL" && (
+                    <p className="text-sm text-muted-foreground mt-3 flex items-center">
+                      Total to deposit:{" "}
+                      <span className="font-medium text-foreground ml-1">
+                        {calculatePlatformFee(
+                          Number.parseFloat(formData.tokenAmount)
+                        ).amountWithFee.toFixed(2)}{" "}
+                        {formData.token}
+                      </span>
+                      <FeeInfo
+                        amount={Number.parseFloat(formData.tokenAmount)}
+                        token={formData.token}
+                        role="seller"
+                      />
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -528,6 +545,22 @@ export default function CreateAdPage() {
                   <p className="text-lg text-muted-foreground">
                     → {calculateTotalFiat()} {formData.fiat}
                   </p>
+                  {formData.type === "SELL" && formData.tokenAmount && (
+                    <p className="text-sm text-muted-foreground mt-2 flex items-center">
+                      You will deposit:{" "}
+                      <span className="font-medium text-foreground ml-1">
+                        {calculatePlatformFee(
+                          Number.parseFloat(formData.tokenAmount)
+                        ).amountWithFee.toFixed(2)}{" "}
+                        {formData.token}
+                      </span>
+                      <FeeInfo
+                        amount={Number.parseFloat(formData.tokenAmount)}
+                        token={formData.token}
+                        role="seller"
+                      />
+                    </p>
+                  )}
                 </div>
                 <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 mb-4">
                   <p className="text-primary font-semibold">
